@@ -2,7 +2,7 @@ plugins {
 	java
 	id("org.springframework.boot") version "3.5.0"
 	id("io.spring.dependency-management") version "1.1.7"
-	// Comment out Node plugin temporarily for backend-only development
+	// Temporarily disable Node plugin
 	// id("com.github.node-gradle.node") version "7.0.1"
 }
 
@@ -31,10 +31,10 @@ dependencies {
 	implementation("org.springframework.boot:spring-boot-starter-validation")
 	implementation("org.springframework.boot:spring-boot-starter-web")
 
-	// JWT dependencies (updated versions)
-	implementation("io.jsonwebtoken:jjwt-api:0.12.3")
-	runtimeOnly("io.jsonwebtoken:jjwt-impl:0.12.3")
-	runtimeOnly("io.jsonwebtoken:jjwt-jackson:0.12.3")
+	// JWT dependencies
+	implementation("io.jsonwebtoken:jjwt-api:0.11.5")
+	runtimeOnly("io.jsonwebtoken:jjwt-impl:0.11.5")
+	runtimeOnly("io.jsonwebtoken:jjwt-jackson:0.11.5")
 
 	compileOnly("org.projectlombok:lombok")
 	developmentOnly("org.springframework.boot:spring-boot-devtools")
@@ -45,62 +45,11 @@ dependencies {
 	testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
-// Comment out Node.js and React tasks temporarily
-/*
-node {
-	version.set("18.17.0")
-	npmVersion.set("9.6.7")
-	download.set(true)
-	nodeProjectDir.set(file("frontend"))
-}
-
-tasks.register<com.github.gradle.node.npm.task.NpmTask>("installFrontendDeps") {
-	workingDir.set(file("frontend"))
-	args.set(listOf("ci"))
-	inputs.file("frontend/package-lock.json")
-	outputs.dir("frontend/node_modules")
-}
-
-tasks.register<com.github.gradle.node.npm.task.NpmTask>("buildReact") {
-	dependsOn("installFrontendDeps")
-	workingDir.set(file("frontend"))
-	args.set(listOf("run", "build"))
-	inputs.dir("frontend/src")
-	inputs.files("frontend/package.json", "frontend/package-lock.json")
-	outputs.dir("frontend/build")
-}
-
-tasks.register<Copy>("copyReactBuild") {
-	dependsOn("buildReact")
-	from("frontend/build")
-	into("src/main/resources/static")
-}
-
-tasks.processResources {
-	dependsOn("copyReactBuild")
-}
-*/
-
 tasks.withType<Test> {
 	useJUnitPlatform()
-}
-
-// Development tasks
-tasks.register("bootRunDev") {
-	group = "application"
-	description = "Run with dev profile"
-	doLast {
-		tasks.bootRun.get().systemProperty("spring.profiles.active", "dev")
-	}
 }
 
 // Production JAR configuration
 tasks.bootJar {
 	archiveFileName.set("iyip-platform.jar")
-}
-
-// Clean task (simplified)
-tasks.clean {
-	// delete("frontend/build")
-	// delete("frontend/node_modules")
 }

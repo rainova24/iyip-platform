@@ -39,29 +39,29 @@ public class JwtTokenProvider {
         Date expiryDate = new Date(System.currentTimeMillis() + jwtExpirationInMs);
 
         return Jwts.builder()
-                .subject(userPrincipal.getEmail())
-                .issuedAt(new Date())
-                .expiration(expiryDate)
-                .signWith(getSigningKey())
+                .setSubject(userPrincipal.getEmail())
+                .setIssuedAt(new Date())
+                .setExpiration(expiryDate)
+                .signWith(getSigningKey(), SignatureAlgorithm.HS512)
                 .compact();
     }
 
     public String getEmailFromToken(String token) {
-        Claims claims = Jwts.parser()
-                .verifyWith(getSigningKey())
+        Claims claims = Jwts.parserBuilder()
+                .setSigningKey(getSigningKey())
                 .build()
-                .parseSignedClaims(token)
-                .getPayload();
+                .parseClaimsJws(token)
+                .getBody();
 
         return claims.getSubject();
     }
 
     public boolean validateToken(String authToken) {
         try {
-            Jwts.parser()
-                    .verifyWith(getSigningKey())
+            Jwts.parserBuilder()
+                    .setSigningKey(getSigningKey())
                     .build()
-                    .parseSignedClaims(authToken);
+                    .parseClaimsJws(authToken);
             return true;
         } catch (SecurityException ex) {
             log.error("Invalid JWT signature: {}", ex.getMessage());
