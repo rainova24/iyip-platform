@@ -19,14 +19,14 @@ public class Role extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-    
-    @Column(nullable = false, unique = true)
+    private Long roleId;
+
+    @Column(nullable = false, unique = true, length = 50)
     private String name;
-    
-    @Column
+
+    @Column(columnDefinition = "TEXT")
     private String description;
-    
-    @OneToMany(mappedBy = "role")
+
+    @OneToMany(mappedBy = "role", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private Set<User> users = new HashSet<>();
 }

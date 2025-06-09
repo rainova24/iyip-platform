@@ -6,7 +6,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -20,26 +20,23 @@ public class Event extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-    
-    @Column(nullable = false)
-    private String name;
-    
-    @Column
+    private Long eventId;
+
+    @Column(nullable = false, length = 150)
+    private String title;
+
+    @Column(columnDefinition = "TEXT")
     private String description;
-    
+
     @Column(nullable = false)
-    private LocalDateTime startDate;
-    
+    private LocalDate startDate;
+
     @Column(nullable = false)
-    private LocalDateTime endDate;
-    
+    private LocalDate endDate;
+
     @Column
-    private String location;
-    
-    @Column
-    private Integer capacity;
-    
-    @OneToMany(mappedBy = "event")
+    private LocalDate registrationDeadline;
+
+    @OneToMany(mappedBy = "event", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private Set<EventRegistration> registrations = new HashSet<>();
 }

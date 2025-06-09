@@ -18,24 +18,65 @@ public class Submission extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-    
+    private Long submissionId;
+
     @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
-    
+
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
+    private SubmissionType type;
+
+    @Column(nullable = false, length = 150)
     private String title;
-    
-    @Column
-    private String description;
-    
-    @Column(nullable = false)
-    private LocalDateTime submissionDate;
-    
-    @Column
+
+    @Column(columnDefinition = "TEXT")
+    private String content;
+
+    @Column(columnDefinition = "TEXT")
     private String fileUrl;
-    
-    @Column
-    private String status; // misalnya: "submitted", "under review", "accepted", "rejected"
+
+    @Column(nullable = false)
+    private LocalDateTime submittedAt;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private SubmissionStatus status = SubmissionStatus.PENDING;
+
+    public enum SubmissionType {
+        MATERIAL("material"),
+        FASILITAS("fasilitas");
+
+        private final String value;
+
+        SubmissionType(String value) {
+            this.value = value;
+        }
+
+        public String getValue() {
+            return value;
+        }
+    }
+
+    public enum SubmissionStatus {
+        PENDING("pending"),
+        APPROVED("approved"),
+        REJECTED("rejected");
+
+        private final String value;
+
+        SubmissionStatus(String value) {
+            this.value = value;
+        }
+
+        public String getValue() {
+            return value;
+        }
+    }
+
+    @PrePersist
+    protected void onCreate() {
+        submittedAt = LocalDateTime.now();
+    }
 }
