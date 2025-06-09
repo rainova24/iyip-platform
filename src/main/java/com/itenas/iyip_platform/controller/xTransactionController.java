@@ -1,8 +1,8 @@
 package com.itenas.iyip_platform.controller;
 
-import com.itenas.iyip_platform.dto.TransactionDto;
+import com.itenas.iyip_platform.dto.xTransactionDto;
 import com.itenas.iyip_platform.security.UserDetailsImpl;
-import com.itenas.iyip_platform.service.TransactionService;
+import com.itenas.iyip_platform.service.xTransactionService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -16,33 +16,33 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/transactions")
 @RequiredArgsConstructor
-public class TransactionController {
+public class xTransactionController {
 
-    private final TransactionService transactionService;
+    private final xTransactionService transactionService;
 
     @GetMapping
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<List<TransactionDto>> getAllTransactions() {
+    public ResponseEntity<List<xTransactionDto>> getAllTransactions() {
         return ResponseEntity.ok(transactionService.findAll());
     }
 
     @GetMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN') or @userSecurity.isOwner(#userDetails.id, #id)")
-    public ResponseEntity<TransactionDto> getTransactionById(
+    public ResponseEntity<xTransactionDto> getTransactionById(
             @PathVariable Long id,
             @AuthenticationPrincipal UserDetailsImpl userDetails) {
         return ResponseEntity.ok(transactionService.findById(id));
     }
 
     @GetMapping("/user")
-    public ResponseEntity<List<TransactionDto>> getUserTransactions(
+    public ResponseEntity<List<xTransactionDto>> getUserTransactions(
             @AuthenticationPrincipal UserDetailsImpl userDetails) {
         return ResponseEntity.ok(transactionService.findByUserId(userDetails.getId()));
     }
 
     @PostMapping
-    public ResponseEntity<TransactionDto> createTransaction(
-            @Valid @RequestBody TransactionDto transactionDto,
+    public ResponseEntity<xTransactionDto> createTransaction(
+            @Valid @RequestBody xTransactionDto transactionDto,
             @AuthenticationPrincipal UserDetailsImpl userDetails) {
         // Set the current user as the transaction owner
         transactionDto.setUserId(userDetails.getId());
@@ -51,9 +51,9 @@ public class TransactionController {
 
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN') or @userSecurity.isOwner(#userDetails.id, #id)")
-    public ResponseEntity<TransactionDto> updateTransaction(
+    public ResponseEntity<xTransactionDto> updateTransaction(
             @PathVariable Long id,
-            @Valid @RequestBody TransactionDto transactionDto,
+            @Valid @RequestBody xTransactionDto transactionDto,
             @AuthenticationPrincipal UserDetailsImpl userDetails) {
         transactionDto.setId(id);
         return ResponseEntity.ok(transactionService.save(transactionDto));

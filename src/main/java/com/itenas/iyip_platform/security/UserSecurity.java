@@ -1,7 +1,6 @@
 package com.itenas.iyip_platform.security;
 
-import com.itenas.iyip_platform.model.entity.Transaction;
-import com.itenas.iyip_platform.repository.TransactionRepository;
+import com.itenas.iyip_platform.repository.xTransactionRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -9,7 +8,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class UserSecurity {
 
-    private final TransactionRepository transactionRepository;
+    private final xTransactionRepository transactionRepository;
 
     public boolean isOwner(Long userId, Long transactionId) {
         return transactionRepository.findById(transactionId)

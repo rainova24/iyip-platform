@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class TransactionDto {
+public class xTransactionDto {
     private Long id;
     private Long userId;
     private String userName;

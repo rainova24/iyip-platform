@@ -1,12 +1,12 @@
 package com.itenas.iyip_platform.service.impl;
 
-import com.itenas.iyip_platform.dto.TransactionDto;
+import com.itenas.iyip_platform.dto.xTransactionDto;
 import com.itenas.iyip_platform.exception.ResourceNotFoundException;
-import com.itenas.iyip_platform.model.entity.Transaction;
+import com.itenas.iyip_platform.model.entity.xTransaction;
 import com.itenas.iyip_platform.model.entity.User;
-import com.itenas.iyip_platform.repository.TransactionRepository;
+import com.itenas.iyip_platform.repository.xTransactionRepository;
 import com.itenas.iyip_platform.repository.UserRepository;
-import com.itenas.iyip_platform.service.TransactionService;
+import com.itenas.iyip_platform.service.xTransactionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -16,27 +16,27 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-public class TransactionServiceImpl implements TransactionService {
+public class xTransactionServiceImpl implements xTransactionService {
 
-    private final TransactionRepository transactionRepository;
+    private final xTransactionRepository transactionRepository;
     private final UserRepository userRepository;
 
     @Override
-    public TransactionDto findById(Long id) {
-        Transaction transaction = transactionRepository.findById(id)
+    public xTransactionDto findById(Long id) {
+        xTransaction transaction = transactionRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Transaction not found with id: " + id));
         return mapToDto(transaction);
     }
 
     @Override
-    public List<TransactionDto> findAll() {
+    public List<xTransactionDto> findAll() {
         return transactionRepository.findAll().stream()
                 .map(this::mapToDto)
                 .collect(Collectors.toList());
     }
 
     @Override
-    public List<TransactionDto> findByUserId(Long userId) {
+    public List<xTransactionDto> findByUserId(Long userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
         return transactionRepository.findByUserOrderByTransactionDateDesc(user).stream()
@@ -45,13 +45,13 @@ public class TransactionServiceImpl implements TransactionService {
     }
 
     @Override
-    public TransactionDto save(TransactionDto transactionDto) {
-        Transaction transaction;
+    public xTransactionDto save(xTransactionDto transactionDto) {
+        xTransaction transaction;
         if (transactionDto.getId() != null) {
             transaction = transactionRepository.findById(transactionDto.getId())
                     .orElseThrow(() -> new ResourceNotFoundException("Transaction not found with id: " + transactionDto.getId()));
         } else {
-            transaction = new Transaction();
+            transaction = new xTransaction();
             transaction.setTransactionDate(LocalDateTime.now());
         }
 
@@ -76,8 +76,8 @@ public class TransactionServiceImpl implements TransactionService {
         transactionRepository.deleteById(id);
     }
 
-    private TransactionDto mapToDto(Transaction transaction) {
-        TransactionDto dto = new TransactionDto();
+    private xTransactionDto mapToDto(xTransaction transaction) {
+        xTransactionDto dto = new xTransactionDto();
         dto.setId(transaction.getId());
         dto.setUserId(transaction.getUser().getId());
         dto.setUserName(transaction.getUser().getName());

@@ -1,8 +1,9 @@
 import axios from 'axios';
-import { authService } from './auth';
+
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8080/api';
 
 const api = axios.create({
-    baseURL: process.env.NODE_ENV === 'production' ? '' : 'http://localhost:8080',
+    baseURL: API_BASE_URL,
     headers: {
         'Content-Type': 'application/json',
     },
@@ -11,7 +12,7 @@ const api = axios.create({
 // Request interceptor to add auth token
 api.interceptors.request.use(
     (config) => {
-        const token = authService.getToken();
+        const token = localStorage.getItem('token');
         if (token) {
             config.headers.Authorization = `Bearer ${token}`;
         }
@@ -22,12 +23,13 @@ api.interceptors.request.use(
     }
 );
 
-// Response interceptor to handle errors
+// Response interceptor to handle token expiration
 api.interceptors.response.use(
     (response) => response,
     (error) => {
         if (error.response?.status === 401) {
-            authService.logout();
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
             window.location.href = '/login';
         }
         return Promise.reject(error);
