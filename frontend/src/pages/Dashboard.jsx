@@ -1,13 +1,7 @@
+// frontend/src/pages/Dashboard.jsx
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
-import Header from '../components/layout/Header';
-import Footer from '../components/layout/Footer';
-import Alert from '../components/common/Alert';
-import { eventService } from '../services/event';
-import { journalService } from '../services/journal';
-import { submissionService } from '../services/submission';
-import { communityService } from '../services/community';
+import { useAuth } from '../context/AuthContext';
 
 const Dashboard = () => {
     const [stats, setStats] = useState({
@@ -16,236 +10,157 @@ const Dashboard = () => {
         mySubmissions: 0,
         myCommunities: 0
     });
-    const [recentActivity, setRecentActivity] = useState({
-        events: [],
-        journals: [],
-        submissions: []
-    });
-    const [loading, setLoading] = useState(true);
-    const [alert, setAlert] = useState(null);
+    const [loading, setLoading] = useState(false);
     const { user } = useAuth();
 
+    // Mock data for now - you can replace with actual API calls later
     useEffect(() => {
-        loadDashboardData();
+        // Simulate loading stats
+        setStats({
+            upcomingEvents: 3,
+            myJournals: 5,
+            mySubmissions: 2,
+            myCommunities: 4
+        });
     }, []);
 
-    const loadDashboardData = async () => {
-        try {
-            setLoading(true);
-
-            // Load stats and recent activity in parallel
-            const [
-                userEvents,
-                userJournals,
-                userSubmissions,
-                userCommunities,
-                upcomingEvents
-            ] = await Promise.all([
-                eventService.getUserEvents(),
-                journalService.getUserJournals(),
-                submissionService.getUserSubmissions(),
-                communityService.getUserCommunities(),
-                eventService.getUpcomingEvents()
-            ]);
-
-            setStats({
-                upcomingEvents: upcomingEvents.length,
-                myJournals: userJournals.length,
-                mySubmissions: userSubmissions.length,
-                myCommunities: userCommunities.length
-            });
-
-            setRecentActivity({
-                events: userEvents.slice(0, 3),
-                journals: userJournals.slice(0, 3),
-                submissions: userSubmissions.slice(0, 3)
-            });
-
-        } catch (error) {
-            setAlert({ message: 'Failed to load dashboard data', type: 'danger' });
-        } finally {
-            setLoading(false);
-        }
-    };
-
     const formatDate = (dateString) => {
-        return new Date(dateString).toLocaleDateString('id-ID', {
-            year: 'numeric',
-            month: 'short',
-            day: 'numeric'
-        });
-    };
-
-    const getStatusBadge = (status) => {
-        const statusClasses = {
-            pending: 'badge-warning',
-            approved: 'badge-success',
-            rejected: 'badge-danger'
-        };
-        return `badge ${statusClasses[status] || 'badge-secondary'}`;
+        return new Date(dateString).toLocaleDateString();
     };
 
     if (loading) {
         return (
-            <div>
-                <Header />
-                <div className="container">
-                    <div style={{ textAlign: 'center', padding: '60px' }}>
-                        <p>Loading dashboard...</p>
+            <div className="container mt-4">
+                <div className="text-center">
+                    <div className="spinner-border" role="status">
+                        <span className="visually-hidden">Loading...</span>
                     </div>
                 </div>
-                <Footer />
             </div>
         );
     }
 
     return (
-        <div>
-            <Header />
-
-            <div className="container">
-                {alert && (
-                    <Alert
-                        message={alert.message}
-                        type={alert.type}
-                        onClose={() => setAlert(null)}
-                    />
-                )}
-
-                <div className="panel">
-                    <h1 className="panel-header">Welcome back, {user?.name}!</h1>
+        <div className="container mt-4">
+            <div className="row">
+                <div className="col-12">
+                    <h1 className="mb-4">Welcome back, {user?.name}!</h1>
 
                     {/* Stats Cards */}
-                    <div className="stats-grid">
-                        <div className="stat-card">
-                            <div className="stat-number">{stats.upcomingEvents}</div>
-                            <div className="stat-label">Upcoming Events</div>
-                            <Link to="/events" className="stat-link">View All</Link>
+                    <div className="row mb-4">
+                        <div className="col-md-3 mb-3">
+                            <div className="card text-center">
+                                <div className="card-body">
+                                    <h2 className="card-title text-primary">{stats.upcomingEvents}</h2>
+                                    <p className="card-text">Upcoming Events</p>
+                                    <Link to="/events" className="btn btn-outline-primary btn-sm">
+                                        View All
+                                    </Link>
+                                </div>
+                            </div>
                         </div>
 
-                        <div className="stat-card">
-                            <div className="stat-number">{stats.myJournals}</div>
-                            <div className="stat-label">My Journals</div>
-                            <Link to="/my-journals" className="stat-link">Manage</Link>
+                        <div className="col-md-3 mb-3">
+                            <div className="card text-center">
+                                <div className="card-body">
+                                    <h2 className="card-title text-success">{stats.myJournals}</h2>
+                                    <p className="card-text">My Journals</p>
+                                    <Link to="/journals" className="btn btn-outline-success btn-sm">
+                                        Manage
+                                    </Link>
+                                </div>
+                            </div>
                         </div>
 
-                        <div className="stat-card">
-                            <div className="stat-number">{stats.mySubmissions}</div>
-                            <div className="stat-label">My Submissions</div>
-                            <Link to="/submissions" className="stat-link">View All</Link>
+                        <div className="col-md-3 mb-3">
+                            <div className="card text-center">
+                                <div className="card-body">
+                                    <h2 className="card-title text-warning">{stats.mySubmissions}</h2>
+                                    <p className="card-text">My Submissions</p>
+                                    <Link to="/submissions" className="btn btn-outline-warning btn-sm">
+                                        View All
+                                    </Link>
+                                </div>
+                            </div>
                         </div>
 
-                        <div className="stat-card">
-                            <div className="stat-number">{stats.myCommunities}</div>
-                            <div className="stat-label">My Communities</div>
-                            <Link to="/communities" className="stat-link">Explore</Link>
+                        <div className="col-md-3 mb-3">
+                            <div className="card text-center">
+                                <div className="card-body">
+                                    <h2 className="card-title text-info">{stats.myCommunities}</h2>
+                                    <p className="card-text">My Communities</p>
+                                    <Link to="/communities" className="btn btn-outline-info btn-sm">
+                                        Explore
+                                    </Link>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
                     {/* Quick Actions */}
-                    <div className="quick-actions">
-                        <h2>Quick Actions</h2>
-                        <div className="action-buttons">
-                            <Link to="/create-journal" className="btn">
-                                <span>📝</span> Create Journal
-                            </Link>
-                            <Link to="/create-submission" className="btn">
-                                <span>📤</span> New Submission
-                            </Link>
-                            <Link to="/events" className="btn">
-                                <span>📅</span> Browse Events
-                            </Link>
-                            <Link to="/communities" className="btn">
-                                <span>👥</span> Join Communities
-                            </Link>
+                    <div className="card mb-4">
+                        <div className="card-header">
+                            <h3>Quick Actions</h3>
+                        </div>
+                        <div className="card-body">
+                            <div className="row">
+                                <div className="col-md-3 mb-2">
+                                    <Link to="/journals" className="btn btn-primary w-100">
+                                        📝 Create Journal
+                                    </Link>
+                                </div>
+                                <div className="col-md-3 mb-2">
+                                    <Link to="/submissions" className="btn btn-success w-100">
+                                        📤 New Submission
+                                    </Link>
+                                </div>
+                                <div className="col-md-3 mb-2">
+                                    <Link to="/events" className="btn btn-info w-100">
+                                        📅 Browse Events
+                                    </Link>
+                                </div>
+                                <div className="col-md-3 mb-2">
+                                    <Link to="/communities" className="btn btn-warning w-100">
+                                        👥 Join Communities
+                                    </Link>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
                     {/* Recent Activity */}
-                    <div className="recent-activity">
-                        <h2>Recent Activity</h2>
-
-                        <div className="activity-grid">
-                            {/* Recent Events */}
-                            <div className="activity-section">
-                                <h3>My Recent Events</h3>
-                                {recentActivity.events.length > 0 ? (
-                                    <div className="activity-list">
-                                        {recentActivity.events.map(event => (
-                                            <div key={event.eventId} className="activity-item">
-                                                <div className="activity-content">
-                                                    <h4>{event.title}</h4>
-                                                    <p>{formatDate(event.startDate)}</p>
-                                                </div>
-                                                <Link to={`/events/${event.eventId}`} className="btn btn-small">
-                                                    View
-                                                </Link>
-                                            </div>
-                                        ))}
-                                    </div>
-                                ) : (
-                                    <p className="no-activity">No recent events</p>
-                                )}
-                                <Link to="/events" className="view-all-link">View all events →</Link>
-                            </div>
-
-                            {/* Recent Journals */}
-                            <div className="activity-section">
-                                <h3>My Recent Journals</h3>
-                                {recentActivity.journals.length > 0 ? (
-                                    <div className="activity-list">
-                                        {recentActivity.journals.map(journal => (
-                                            <div key={journal.journalId} className="activity-item">
-                                                <div className="activity-content">
-                                                    <h4>{journal.title}</h4>
-                                                    <p>{formatDate(journal.createdAt)}</p>
-                                                    <span className={journal.isPublic ? 'badge badge-public' : 'badge badge-private'}>
-                                                        {journal.isPublic ? 'Public' : 'Private'}
-                                                    </span>
-                                                </div>
-                                                <Link to={`/journals/${journal.journalId}`} className="btn btn-small">
-                                                    View
-                                                </Link>
-                                            </div>
-                                        ))}
-                                    </div>
-                                ) : (
-                                    <p className="no-activity">No journals yet</p>
-                                )}
-                                <Link to="/my-journals" className="view-all-link">View all journals →</Link>
-                            </div>
-
-                            {/* Recent Submissions */}
-                            <div className="activity-section">
-                                <h3>My Recent Submissions</h3>
-                                {recentActivity.submissions.length > 0 ? (
-                                    <div className="activity-list">
-                                        {recentActivity.submissions.map(submission => (
-                                            <div key={submission.submissionId} className="activity-item">
-                                                <div className="activity-content">
-                                                    <h4>{submission.title}</h4>
-                                                    <p>{formatDate(submission.submittedAt)}</p>
-                                                    <span className={getStatusBadge(submission.status)}>
-                                                        {submission.status}
-                                                    </span>
-                                                </div>
-                                                <Link to={`/submissions/${submission.submissionId}`} className="btn btn-small">
-                                                    View
-                                                </Link>
-                                            </div>
-                                        ))}
-                                    </div>
-                                ) : (
-                                    <p className="no-activity">No submissions yet</p>
-                                )}
-                                <Link to="/submissions" className="view-all-link">View all submissions →</Link>
+                    <div className="card">
+                        <div className="card-header">
+                            <h3>Recent Activity</h3>
+                        </div>
+                        <div className="card-body">
+                            <div className="row">
+                                <div className="col-md-4">
+                                    <h5>Recent Events</h5>
+                                    <p className="text-muted">No recent events</p>
+                                    <Link to="/events" className="btn btn-outline-primary btn-sm">
+                                        View all events →
+                                    </Link>
+                                </div>
+                                <div className="col-md-4">
+                                    <h5>Recent Journals</h5>
+                                    <p className="text-muted">No recent journals</p>
+                                    <Link to="/journals" className="btn btn-outline-success btn-sm">
+                                        View all journals →
+                                    </Link>
+                                </div>
+                                <div className="col-md-4">
+                                    <h5>Recent Submissions</h5>
+                                    <p className="text-muted">No recent submissions</p>
+                                    <Link to="/submissions" className="btn btn-outline-warning btn-sm">
+                                        View all submissions →
+                                    </Link>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
-
-            <Footer />
         </div>
     );
 };
