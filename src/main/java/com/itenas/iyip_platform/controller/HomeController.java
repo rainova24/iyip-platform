@@ -7,22 +7,16 @@ import org.springframework.web.bind.annotation.ResponseBody;
 
 @Controller
 public class HomeController {
+
+    // Serve React app for root path
     @RequestMapping("/")
     public String index() {
-        return "index.html";
+        return "forward:/index.html";
     }
 
-//    @GetMapping("/")
-//
-//
-//    @ResponseBody
-//    public String home() {
-//        return "<html><body><h1>Welcome to IYIP Platform API</h1>" +
-//               "<p>This is a REST API. Please use appropriate API client to access the endpoints.</p>" +
-//               "<p>Available public endpoints:</p>" +
-//               "<ul>" +
-//               "<li>/api/auth/login</li>" +
-//               "<li>/api/auth/register</li>" +
-//               "</ul></body></html>";
-//    }
+    // Forward SPA routes to React
+    @RequestMapping(value = "/{path:[^\\.]*}")
+    public String redirect() {
+        return "forward:/index.html";
+    }
 }
