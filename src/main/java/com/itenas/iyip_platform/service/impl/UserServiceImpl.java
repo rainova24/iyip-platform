@@ -39,9 +39,9 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserDto save(UserDto userDto) {
         User user;
-        if (userDto.getId() != null) {
-            user = userRepository.findById(userDto.getId())
-                    .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userDto.getId()));
+        if (userDto.getUserId() != null) {
+            user = userRepository.findById(userDto.getUserId())
+                    .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userDto.getUserId()));
             user.setName(userDto.getName());
             user.setEmail(userDto.getEmail());
         } else {
@@ -57,8 +57,8 @@ public class UserServiceImpl implements UserService {
                 .orElseThrow(() -> new ResourceNotFoundException("Role not found with name: " + userDto.getRoleName()));
         user.setRole(role);
 
-        user = userRepository.save(user);
-        return mapToDto(user);
+        User savedUser = userRepository.save(user);
+        return mapToDto(savedUser);
     }
 
     @Override
@@ -84,10 +84,23 @@ public class UserServiceImpl implements UserService {
 
     private UserDto mapToDto(User user) {
         UserDto dto = new UserDto();
-        dto.setId(user.getId());
+        dto.setUserId(user.getUserId());  // Updated to use getUserId()
         dto.setName(user.getName());
+        dto.setNim(user.getNim());
         dto.setEmail(user.getEmail());
-        dto.setRoleName(user.getRole().getName());
+        dto.setBirthDate(user.getBirthDate());
+        dto.setGender(user.getGender());
+        dto.setPhone(user.getPhone());
+        dto.setProvince(user.getProvince());
+        dto.setCity(user.getCity());
+        dto.setRegisteredAt(user.getRegisteredAt());
+        dto.setUpdatedAt(user.getUpdatedAt());
+
+        if (user.getRole() != null) {
+            dto.setRoleName(user.getRole().getName());
+            dto.setRoleId(user.getRole().getRoleId());  // Updated to use getRoleId()
+        }
+
         return dto;
     }
 }

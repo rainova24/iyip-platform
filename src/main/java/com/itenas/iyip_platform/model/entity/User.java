@@ -17,16 +17,17 @@ import java.util.Set;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class User extends BaseEntity {
+public class User {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "user_id")
     private Long userId;
 
     @Column(nullable = false, length = 100)
     private String name;
 
-    @Column(nullable = false, unique = true, length = 11)
+    @Column(unique = true, length = 11)
     private String nim;
 
     @Column(nullable = false, length = 255)
@@ -35,7 +36,7 @@ public class User extends BaseEntity {
     @Column(nullable = false, unique = true, length = 100)
     private String email;
 
-    @Column
+    @Column(name = "birth_date")
     private LocalDate birthDate;
 
     @Enumerated(EnumType.STRING)
@@ -51,15 +52,19 @@ public class User extends BaseEntity {
     @Column(length = 100)
     private String city;
 
-    @Column(nullable = false)
+    @Column(name = "registered_at", nullable = false)
     private LocalDateTime registeredAt;
 
-    @Column
+    @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "role_id", nullable = false)
     private Role role;
+
+    // Remove transactions relationship - no longer used
+    // @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    // private Set<Transaction> transactions = new HashSet<>();
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private Set<UserCommunity> communities = new HashSet<>();
@@ -97,5 +102,14 @@ public class User extends BaseEntity {
     @PreUpdate
     protected void onUpdate() {
         updatedAt = LocalDateTime.now();
+    }
+
+    // Helper method for getUserId (for backward compatibility)
+    public Long getId() {
+        return userId;
+    }
+
+    public void setId(Long id) {
+        this.userId = id;
     }
 }

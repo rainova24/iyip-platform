@@ -2,7 +2,8 @@ plugins {
 	java
 	id("org.springframework.boot") version "3.5.0"
 	id("io.spring.dependency-management") version "1.1.7"
-	id("com.github.node-gradle.node") version "7.0.1"  // 🆕 Added for React support
+	// Comment out Node plugin temporarily for backend-only development
+	// id("com.github.node-gradle.node") version "7.0.1"
 }
 
 group = "com.itenas"
@@ -37,14 +38,15 @@ dependencies {
 
 	compileOnly("org.projectlombok:lombok")
 	developmentOnly("org.springframework.boot:spring-boot-devtools")
-	runtimeOnly("com.mysql:mysql-connector-j")  // MySQL tetap digunakan
+	runtimeOnly("com.mysql:mysql-connector-j")
 	annotationProcessor("org.projectlombok:lombok")
 	testImplementation("org.springframework.boot:spring-boot-starter-test")
 	testImplementation("org.springframework.security:spring-security-test")
 	testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
-// 🆕 Node.js configuration for React
+// Comment out Node.js and React tasks temporarily
+/*
 node {
 	version.set("18.17.0")
 	npmVersion.set("9.6.7")
@@ -52,7 +54,6 @@ node {
 	nodeProjectDir.set(file("frontend"))
 }
 
-// 🆕 Frontend build tasks
 tasks.register<com.github.gradle.node.npm.task.NpmTask>("installFrontendDeps") {
 	workingDir.set(file("frontend"))
 	args.set(listOf("ci"))
@@ -75,16 +76,16 @@ tasks.register<Copy>("copyReactBuild") {
 	into("src/main/resources/static")
 }
 
-// 🆕 Include React build in Spring Boot build
 tasks.processResources {
 	dependsOn("copyReactBuild")
 }
+*/
 
 tasks.withType<Test> {
 	useJUnitPlatform()
 }
 
-// 🆕 Development tasks
+// Development tasks
 tasks.register("bootRunDev") {
 	group = "application"
 	description = "Run with dev profile"
@@ -93,19 +94,13 @@ tasks.register("bootRunDev") {
 	}
 }
 
-tasks.register<com.github.gradle.node.npm.task.NpmTask>("startReact") {
-	dependsOn("installFrontendDeps")
-	workingDir.set(file("frontend"))
-	args.set(listOf("start"))
-}
-
-// 🆕 Production JAR configuration
+// Production JAR configuration
 tasks.bootJar {
 	archiveFileName.set("iyip-platform.jar")
 }
 
-// 🆕 Clean task to include frontend
+// Clean task (simplified)
 tasks.clean {
-	delete("frontend/build")
-	delete("frontend/node_modules")
+	// delete("frontend/build")
+	// delete("frontend/node_modules")
 }

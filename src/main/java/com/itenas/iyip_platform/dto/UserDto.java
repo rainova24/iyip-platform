@@ -16,7 +16,6 @@ public class UserDto {
     @NotBlank(message = "Name is required")
     private String name;
 
-    @NotBlank(message = "NIM is required")
     @Size(max = 11, message = "NIM must be at most 11 characters")
     private String nim;
 

@@ -1,6 +1,5 @@
 package com.itenas.iyip_platform.security;
 
-import com.itenas.iyip_platform.repository.xTransactionRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -8,11 +7,22 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class UserSecurity {
 
-    private final xTransactionRepository transactionRepository;
+    // Remove all Transaction-related methods since we don't use Transaction anymore
 
-    public boolean isOwner(Long userId, Long transactionId) {
-        return transactionRepository.findById(transactionId)
-                .map(transaction -> transaction.getUser().getId().equals(userId))
-                .orElse(false);
+    /**
+     * Check if user owns a resource by comparing user IDs
+     */
+    public boolean isOwner(Long userId, Long resourceUserId) {
+        if (userId == null || resourceUserId == null) {
+            return false;
+        }
+        return userId.equals(resourceUserId);
+    }
+
+    /**
+     * Check if user is admin or owner of resource
+     */
+    public boolean isAdminOrOwner(String role, Long userId, Long resourceUserId) {
+        return "ADMIN".equals(role) || isOwner(userId, resourceUserId);
     }
 }
