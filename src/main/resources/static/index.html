@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IYIP Platform - Modern Experience</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+</head>
+<body>
+<!-- Floating Particles -->
+<div class="particles" id="particles"></div>
+
+<!-- Navigation -->
+<nav class="navbar">
+    <div class="nav-container">
+        <div class="logo">IYIP</div>
+        <ul class="nav-menu">
+            <li class="nav-item"><a href="#home">Beranda</a></li>
+            <li class="nav-item"><a href="#events">Events</a></li>
+            <li class="nav-item"><a href="#journals">Jurnal</a></li>
+            <li class="nav-item"><a href="#community">Komunitas</a></li>
+            <li class="nav-item"><a href="#submissions">Submissions</a></li>
+        </ul>
+        <div class="auth-buttons">
+            <a href="#login" class="btn-login">Masuk</a>
+            <a href="#register" class="btn-register">Daftar</a>
+        </div>
+    </div>
+</nav>
+
+<!-- Hero Section -->
+<section class="hero" id="home">
+    <div class="hero-content">
+        <h1 class="hero-title">Platform Inovasi Terdepan</h1>
+        <p class="hero-subtitle">
+            Bergabunglah dengan komunitas inovator, peneliti, dan profesional dalam
+            platform kolaboratif yang menghubungkan ide-ide cemerlang dengan peluang nyata.
+        </p>
+        <div class="hero-buttons">
+            <a href="#dashboard" class="btn-primary interactive-element ripple-effect">
+                Mulai Sekarang
+            </a>
+            <a href="#about" class="btn-secondary interactive-element ripple-effect">
+                Pelajari Lebih Lanjut
+            </a>
+        </div>
+    </div>
+</section>
+
+<!-- Features Section -->
+<section class="features-section" id="features">
+    <div class="container">
+        <h2 class="section-title fade-in-up">Fitur Unggulan</h2>
+
+        <div class="features-grid">
+            <div class="feature-card fade-in-up interactive-element">
+                <div class="feature-icon">📅</div>
+                <h3 class="feature-title">Event Management</h3>
+                <p class="feature-description">
+                    Kelola dan ikuti berbagai event inovasi, workshop, dan seminar
+                    dengan sistem registrasi yang terintegrasi dan notifikasi real-time.
+                </p>
+            </div>
+
+            <div class="feature-card fade-in-up interactive-element">
+                <div class="feature-icon">📖</div>
+                <h3 class="feature-title">Digital Journal</h3>
+                <p class="feature-description">
+                    Dokumentasikan perjalanan inovasi Anda, bagikan insight,
+                    dan berkolaborasi dengan komunitas melalui jurnal digital interaktif.
+                </p>
+            </div>
+
+            <div class="feature-card fade-in-up interactive-element">
+                <div class="feature-icon">👥</div>
+                <h3 class="feature-title">Community Hub</h3>
+                <p class="feature-description">
+                    Bergabung dengan komunitas yang sesuai dengan minat dan expertise Anda.
+                    Networking, diskusi, dan kolaborasi dalam satu platform.
+                </p>
+            </div>
+
+            <div class="feature-card fade-in-up interactive-element">
+                <div class="feature-icon">📋</div>
+                <h3 class="feature-title">Smart Submissions</h3>
+                <p class="feature-description">
+                    Submit proposal, materi, dan karya inovasi dengan sistem tracking
+                    yang transparan dan feedback otomatis dari reviewer ahli.
+                </p>
+            </div>
+
+            <div class="feature-card fade-in-up interactive-element">
+                <div class="feature-icon">🔐</div>
+                <h3 class="feature-title">Secure Platform</h3>
+                <p class="feature-description">
+                    Keamanan tingkat enterprise dengan autentikasi JWT, enkripsi data,
+                    dan sistem role-based access untuk melindungi karya intellectual Anda.
+                </p>
+            </div>
+
+            <div class="feature-card fade-in-up interactive-element">
+                <div class="feature-icon">📊</div>
+                <h3 class="feature-title">Analytics Dashboard</h3>
+                <p class="feature-description">
+                    Monitor progress, analisis engagement, dan dapatkan insight
+                    mendalam tentang aktivitas dan pencapaian Anda di platform.
+                </p>
+            </div>
+        </div>
+
+        <!-- Dashboard Preview -->
+        <div class="dashboard-preview fade-in-up">
+            <div class="dashboard-header">
+                <h3 class="dashboard-title">Dashboard Overview</h3>
+                <div class="dashboard-tabs">
+                    <button class="tab-button active" onclick="switchTab('overview')">Overview</button>
+                    <button class="tab-button" onclick="switchTab('events')">Events</button>
+                    <button class="tab-button" onclick="switchTab('journals')">Journals</button>
+                    <button class="tab-button" onclick="switchTab('community')">Community</button>
+                </div>
+            </div>
+
+            <div class="dashboard-content" id="dashboard-content">
+                <div class="dashboard-card interactive-element">
+                    <div class="card-header">
+                        <div class="card-icon">🎯</div>
+                        <div class="card-title">Active Projects</div>
+                    </div>
+                    <div class="card-content">
+                        Kelola 5 proyek aktif dengan timeline yang jelas dan milestone tracking
+                    </div>
+                    <div class="card-meta">
+                        <span class="card-date">Updated 2 hours ago</span>
+                        <span class="card-status status-active">Active</span>
+                    </div>
+                </div>
+
+                <div class="dashboard-card interactive-element">
+                    <div class="card-header">
+                        <div class="card-icon">📈</div>
+                        <div class="card-title">Performance Analytics</div>
+                    </div>
+                    <div class="card-content">
+                        Lihat statistik engagement, submission rate, dan community activity
+                    </div>
+                    <div class="card-meta">
+                        <span class="card-date">Live data</span>
+                        <span class="card-status status-active">Real-time</span>
+                    </div>
+                </div>
+
+                <div class="dashboard-card interactive-element">
+                    <div class="card-header">
+                        <div class="card-icon">🔔</div>
+                        <div class="card-title">Recent Notifications</div>
+                    </div>
+                    <div class="card-content">
+                        3 event baru, 2 journal update, dan 5 community invitation menunggu
+                    </div>
+                    <div class="card-meta">
+                        <span class="card-date">5 minutes ago</span>
+                        <span class="card-status status-pending">Pending</span>
+                    </div>
+                </div>
+
+                <div class="dashboard-card interactive-element">
+                    <div class="card-header">
+                        <div class="card-icon">🤝</div>
+                        <div class="card-title">Collaboration Requests</div>
+                    </div>
+                    <div class="card-content">
+                        Tinjau dan respond terhadap 7 permintaan kolaborasi dari expert
+                    </div>
+                    <div class="card-meta">
+                        <span class="card-date">1 day ago</span>
+                        <span class="card-status status-pending">Review</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Footer -->
+<footer class="footer">
+    <div class="footer-content">
+        <p class="footer-text">
+            Bergabunglah dengan revolusi inovasi bersama IYIP Platform
+        </p>
+        <div class="footer-links">
+            <a href="#about">Tentang Kami</a>
+            <a href="#privacy">Kebijakan Privasi</a>
+            <a href="#terms">Syarat & Ketentuan</a>
+            <a href="#contact">Kontak</a>
+            <a href="#help">Bantuan</a>
+        </div>
+        <p class="footer-copyright">
+            © 2024 IYIP Platform. All rights reserved. Built with ❤️ for innovators.
+        </p>
+    </div>
+</footer>
+
+<script src="/js/main.js"></script>
+</body>
+</html>
