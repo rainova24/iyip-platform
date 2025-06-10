@@ -58,16 +58,15 @@ public class SecurityConfig {
                 .exceptionHandling(ex -> ex.authenticationEntryPoint(jwtAuthenticationEntryPoint))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(authz -> authz
-                        // Public endpoints
+                        // Public endpoints - ALLOW COMMUNITIES
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/api/public/**").permitAll()
+                        .requestMatchers("/api/communities").permitAll()  // ← TAMBAHKAN INI
+                        .requestMatchers("/api/communities/**").permitAll()  // ← TAMBAHKAN INI
                         .requestMatchers("/api/events/**").permitAll()
                         .requestMatchers("/api/journals/public").permitAll()
                         .requestMatchers("/api/journals/{id}").permitAll()
-                        .requestMatchers("/api/communities/**").permitAll()
                         .requestMatchers("/error").permitAll()
-                        // Tambahkan ini untuk frontend React:
-                        .requestMatchers("/", "/static/**", "/*.js", "/*.css", "/*.png", "/*.jpg", "/*.ico").permitAll()
 
                         // Admin only endpoints
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
