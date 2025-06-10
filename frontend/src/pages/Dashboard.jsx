@@ -1,20 +1,20 @@
 // src/pages/Dashboard.jsx
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import axios from 'axios';
 
 const Dashboard = () => {
-    const { user, logout } = useAuth();
-    const navigate = useNavigate();
-    const [stats, setStats] = useState({
-        journals: 0,
-        events: 0,
-        submissions: 0,
-        communities: 0
-    });
-    const [recentActivities, setRecentActivities] = useState([]);
+    const { user } = useAuth();
     const [loading, setLoading] = useState(true);
+    const [stats, setStats] = useState({
+        myJournals: 0,
+        myEvents: 0,
+        myCommunities: 0,
+        mySubmissions: 0
+    });
+    const [recentActivity, setRecentActivity] = useState([]);
+    const [upcomingEvents, setUpcomingEvents] = useState([]);
 
     useEffect(() => {
         fetchDashboardData();
@@ -22,6 +22,8 @@ const Dashboard = () => {
 
     const fetchDashboardData = async () => {
         try {
+            setLoading(true);
+            
             // Fetch user statistics
             const [journalsRes, eventsRes, submissionsRes, communitiesRes] = await Promise.all([
                 axios.get('/api/journals/count'),
@@ -31,15 +33,34 @@ const Dashboard = () => {
             ]);
 
             setStats({
-                journals: journalsRes.data.count || 0,
-                events: eventsRes.data.count || 0,
-                submissions: submissionsRes.data.count || 0,
-                communities: communitiesRes.data.count || 0
+                myJournals: journalsRes.data.count || 0,
+                myEvents: eventsRes.data.count || 0,
+                mySubmissions: submissionsRes.data.count || 0,
+                myCommunities: communitiesRes.data.count || 0
             });
 
             // Fetch recent activities
             const activitiesRes = await axios.get('/api/activities/recent');
-            setRecentActivities(activitiesRes.data || []);
+            setRecentActivity(activitiesRes.data.map(activity => ({
+                id: activity.id,
+                type: activity.type,
+                title: activity.description,
+                time: new Date(activity.createdAt).toLocaleDateString(),
+                icon: getActivityIcon(activity.type),
+                color: getActivityColor(activity.type)
+            })));
+
+            // Fetch upcoming events
+            const upcomingEventsRes = await axios.get('/api/events/upcoming');
+            setUpcomingEvents(upcomingEventsRes.data.map(event => ({
+                id: event.id,
+                title: event.title,
+                date: event.date,
+                time: event.time,
+                location: event.location,
+                status: event.status
+            })));
+
         } catch (error) {
             console.error('Error fetching dashboard data:', error);
         } finally {
@@ -47,184 +68,179 @@ const Dashboard = () => {
         }
     };
 
-    const handleLogout = () => {
-        logout();
-        navigate('/');
+    const getActivityIcon = (type) => {
+        switch (type) {
+            case 'journal': return 'fa-book';
+            case 'event': return 'fa-calendar-alt';
+            case 'community': return 'fa-users';
+            case 'submission': return 'fa-upload';
+            default: return 'fa-circle';
+        }
     };
 
-    return (
-        <>
-            <header className="header">
-                <div className="container">
-                    <Link to="/" className="logo">
-                        <span>🎓</span> IYIP Platform
-                    </Link>
-                    <nav>
-                        <ul className="nav-menu">
-                            <li><Link to="/dashboard">Dashboard</Link></li>
-                            <li><Link to="/journals">Journals</Link></li>
-                            <li><Link to="/events">Events</Link></li>
-                            <li><Link to="/submissions">Submissions</Link></li>
-                            <li><Link to="/communities">Communities</Link></li>
-                            <li>
-                                <button onClick={handleLogout} className="nav-link-button">
-                                    Logout
-                                </button>
-                            </li>
-                        </ul>
-                    </nav>
-                </div>
-            </header>
+    const getActivityColor = (type) => {
+        switch (type) {
+            case 'journal': return 'var(--primary-orange)';
+            case 'event': return 'var(--info)';
+            case 'community': return 'var(--success)';
+            case 'submission': return 'var(--warning)';
+            default: return 'var(--text-light)';
+        }
+    };
 
-            <div className="container">
-                {/* Welcome Section */}
-                <div className="panel" style={{
-                    background: 'linear-gradient(135deg, var(--primary-orange) 0%, var(--secondary-orange) 100%)',
-                    color: 'white'
-                }}>
-                    <h1 style={{ marginBottom: '0.5rem' }}>
-                        Welcome back, {user?.name || 'User'}! 👋
-                    </h1>
-                    <p style={{ opacity: 0.9 }}>
-                        Here's an overview of your academic activities
-                    </p>
+    const quickActions = [
+        {
+            title: 'Create Journal',
+            description: 'Start writing your new academic journal',
+            icon: 'fa-plus',
+            link: '/journals',
+            color: 'var(--primary-orange)',
+            gradient: 'linear-gradient(135deg, var(--primary-orange), var(--secondary-orange))'
+        },
+        {
+            title: 'Browse Events',
+            description: 'Discover upcoming academic events',
+            icon: 'fa-search',
+            link: '/events',
+            color: 'var(--info)',
+            gradient: 'linear-gradient(135deg, var(--info), #5DADE2)'
+        },
+        {
+            title: 'Join Community',
+            description: 'Connect with like-minded students',
+            icon: 'fa-user-plus',
+            link: '/communities',
+            color: 'var(--success)',
+            gradient: 'linear-gradient(135deg, var(--success), #58D68D)'
+        },
+        {
+            title: 'Submit Request',
+            description: 'Submit material or facility requests',
+            icon: 'fa-paper-plane',
+            link: '/submissions',
+            color: 'var(--warning)',
+            gradient: 'linear-gradient(135deg, var(--warning), #F7DC6F)'
+        }
+    ];
+
+    if (loading) {
+        return (
+            <div className="d-flex align-items-center justify-content-center" style={{ minHeight: '60vh', flexDirection: 'column', gap: '1rem' }}>
+                <div className="spinner"></div>
+                <p className="text-secondary">Loading your dashboard...</p>
+            </div>
+        );
+    }
+
+    return (
+        <div className="dashboard-container">
+            {/* No sidebar, only main content */}
+            <div className="main-content w-100">
+                {/* Welcome Header */}
+                <div className="mb-4 p-4 bg-primary text-white rounded fade-in" style={{ boxShadow: 'var(--shadow-md)' }}>
+                    <div className="d-flex align-items-center gap-3">
+                        <div style={{
+                            width: 64,
+                            height: 64,
+                            borderRadius: '50%',
+                            background: 'rgba(255,255,255,0.18)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontSize: 28,
+                            fontWeight: 700
+                        }}>{user?.name?.charAt(0).toUpperCase() || 'U'}</div>
+                        <div>
+                            <h1 className="mb-1" style={{ color: 'var(--white)' }}>Welcome, {user?.name || 'User'}!</h1>
+                            <div className="d-flex gap-3" style={{ flexWrap: 'wrap' }}>
+                                <span className="text-white"><i className="fas fa-envelope"></i> {user?.email}</span>
+                                <span className="text-white"><i className="fas fa-user-tag"></i> {user?.role || 'Student'}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Stats Grid */}
+                <div className="stats-grid mb-4">
+                    <div className="stat-card">
+                        <div className="stat-number">{stats.myJournals}</div>
+                        <div className="stat-label"><i className="fas fa-book"></i> My Journals</div>
+                    </div>
+                    <div className="stat-card">
+                        <div className="stat-number">{stats.myEvents}</div>
+                        <div className="stat-label"><i className="fas fa-calendar-alt"></i> Registered Events</div>
+                    </div>
+                    <div className="stat-card">
+                        <div className="stat-number">{stats.myCommunities}</div>
+                        <div className="stat-label"><i className="fas fa-users"></i> Joined Communities</div>
+                    </div>
+                    <div className="stat-card">
+                        <div className="stat-number">{stats.mySubmissions}</div>
+                        <div className="stat-label"><i className="fas fa-upload"></i> My Submissions</div>
+                    </div>
                 </div>
 
                 {/* Quick Actions */}
-                <div className="panel">
-                    <h2 className="panel-header">Quick Actions</h2>
-                    <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-                        <Link to="/journals/new" className="btn">
-                            <span style={{ marginRight: '0.5rem' }}>📝</span>
-                            Create Journal
-                        </Link>
-                        <Link to="/events" className="btn btn-secondary">
-                            <span style={{ marginRight: '0.5rem' }}>📅</span>
-                            Browse Events
-                        </Link>
-                        <Link to="/submissions/new" className="btn btn-secondary">
-                            <span style={{ marginRight: '0.5rem' }}>📤</span>
-                            New Submission
-                        </Link>
-                        <Link to="/communities" className="btn btn-secondary">
-                            <span style={{ marginRight: '0.5rem' }}>👥</span>
-                            Join Community
-                        </Link>
+                <div className="mb-5">
+                    <h2 className="mb-3" style={{ color: 'var(--text-dark)' }}>Quick Actions</h2>
+                    <div className="stats-grid">
+                        {quickActions.map((action, idx) => (
+                            <Link key={idx} to={action.link} className="card btn p-4 fade-in" style={{ borderLeft: `4px solid ${action.color}` }}>
+                                <div className="mb-2" style={{ fontSize: 24, color: action.color }}><i className={`fas ${action.icon}`}></i></div>
+                                <div className="card-title mb-1" style={{ color: 'var(--text-dark)' }}>{action.title}</div>
+                                <div className="card-text text-secondary">{action.description}</div>
+                            </Link>
+                        ))}
                     </div>
                 </div>
 
-                {/* Statistics Grid */}
-                <div className="dashboard-grid">
-                    <div className="stat-card">
-                        <div className="stat-number">
-                            {loading ? '...' : stats.journals}
-                        </div>
-                        <div className="stat-label">My Journals</div>
-                    </div>
-                    <div className="stat-card">
-                        <div className="stat-number">
-                            {loading ? '...' : stats.events}
-                        </div>
-                        <div className="stat-label">Registered Events</div>
-                    </div>
-                    <div className="stat-card">
-                        <div className="stat-number">
-                            {loading ? '...' : stats.submissions}
-                        </div>
-                        <div className="stat-label">Submissions</div>
-                    </div>
-                    <div className="stat-card">
-                        <div className="stat-number">
-                            {loading ? '...' : stats.communities}
-                        </div>
-                        <div className="stat-label">Communities</div>
-                    </div>
-                </div>
-
-                {/* Recent Activities */}
-                <div className="panel">
-                    <h2 className="panel-header">Recent Activities</h2>
-                    {loading ? (
-                        <p className="text-center">Loading activities...</p>
-                    ) : recentActivities.length > 0 ? (
-                        <div className="table-container">
-                            <table>
-                                <thead>
-                                <tr>
-                                    <th>Activity</th>
-                                    <th>Type</th>
-                                    <th>Date</th>
-                                    <th>Status</th>
-                                </tr>
-                                </thead>
-                                <tbody>
-                                {recentActivities.map((activity, index) => (
-                                    <tr key={index}>
-                                        <td>{activity.description}</td>
-                                        <td>
-                                                <span style={{
-                                                    padding: '0.25rem 0.75rem',
-                                                    borderRadius: '15px',
-                                                    background: 'var(--bg-light)',
-                                                    color: 'var(--primary-orange)',
-                                                    fontSize: '0.875rem'
-                                                }}>
-                                                    {activity.type}
-                                                </span>
-                                        </td>
-                                        <td>{new Date(activity.createdAt).toLocaleDateString()}</td>
-                                        <td>
-                                                <span style={{
-                                                    color: activity.status === 'completed' ? '#28a745' : '#ffc107'
-                                                }}>
-                                                    {activity.status}
-                                                </span>
-                                        </td>
-                                    </tr>
-                                ))}
-                                </tbody>
-                            </table>
-                        </div>
-                    ) : (
-                        <p className="text-center" style={{ color: 'var(--text-light)' }}>
-                            No recent activities. Start by creating a journal or joining an event!
-                        </p>
-                    )}
-                </div>
-
-                {/* User Profile Summary */}
-                <div className="panel">
-                    <h2 className="panel-header">Profile Information</h2>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem' }}>
+                {/* Recent Activity & Upcoming Events */}
+                <div className="d-flex gap-4 flex-wrap">
+                    {/* Recent Activity */}
+                    <div className="card p-4 mb-4 fade-in" style={{ flex: 1, minWidth: 320 }}>
+                        <h2 className="mb-3" style={{ color: 'var(--text-dark)' }}>Recent Activity</h2>
                         <div>
-                            <label style={{ color: 'var(--text-light)', fontSize: '0.875rem' }}>Name</label>
-                            <p style={{ fontWeight: '600' }}>{user?.name || 'Not set'}</p>
-                        </div>
-                        <div>
-                            <label style={{ color: 'var(--text-light)', fontSize: '0.875rem' }}>Email</label>
-                            <p style={{ fontWeight: '600' }}>{user?.email || 'Not set'}</p>
-                        </div>
-                        <div>
-                            <label style={{ color: 'var(--text-light)', fontSize: '0.875rem' }}>NIM</label>
-                            <p style={{ fontWeight: '600' }}>{user?.nim || 'Not set'}</p>
-                        </div>
-                        <div>
-                            <label style={{ color: 'var(--text-light)', fontSize: '0.875rem' }}>Member Since</label>
-                            <p style={{ fontWeight: '600' }}>
-                                {user?.registeredAt ? new Date(user.registeredAt).toLocaleDateString() : 'Unknown'}
-                            </p>
+                            {recentActivity.length === 0 ? (
+                                <div className="text-center text-secondary p-3">No recent activity.</div>
+                            ) : recentActivity.map((activity) => (
+                                <div key={activity.id} className="d-flex align-items-center gap-3 mb-3 pb-2" style={{ borderBottom: '1px solid var(--border-color)' }}>
+                                    <div style={{ width: 36, height: 36, borderRadius: '50%', background: activity.color, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16 }}>
+                                        <i className={`fas ${activity.icon}`}></i>
+                                    </div>
+                                    <div>
+                                        <div className="fw-bold" style={{ color: 'var(--text-dark)' }}>{activity.title}</div>
+                                        <div className="text-secondary" style={{ fontSize: 13 }}>{activity.time}</div>
+                                    </div>
+                                </div>
+                            ))}
                         </div>
                     </div>
-                    <Link to="/profile" className="btn btn-secondary mt-3">
-                        Edit Profile
-                    </Link>
+                    {/* Upcoming Events */}
+                    <div className="card p-4 mb-4 fade-in" style={{ flex: 1, minWidth: 320 }}>
+                        <h2 className="mb-3" style={{ color: 'var(--text-dark)' }}>Upcoming Events</h2>
+                        <div>
+                            {upcomingEvents.length === 0 ? (
+                                <div className="text-center text-secondary p-3">No upcoming events.</div>
+                            ) : upcomingEvents.map((event) => (
+                                <div key={event.id} className="mb-3 pb-2" style={{ borderBottom: '1px solid var(--border-color)' }}>
+                                    <div className="d-flex justify-content-between align-items-center mb-1">
+                                        <div className="fw-bold" style={{ color: 'var(--text-dark)' }}>{event.title}</div>
+                                        <span className={`badge ${event.status === 'registered' ? 'bg-success' : 'bg-primary'}`} style={{ fontSize: 13 }}>
+                                            {event.status === 'registered' ? 'Registered' : 'Available'}
+                                        </span>
+                                    </div>
+                                    <div className="d-flex gap-3 text-secondary" style={{ fontSize: 13 }}>
+                                        <div><i className="fas fa-calendar"></i> {new Date(event.date).toLocaleDateString()}</div>
+                                        <div><i className="fas fa-clock"></i> {event.time}</div>
+                                        <div><i className="fas fa-map-marker-alt"></i> {event.location}</div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
                 </div>
             </div>
-
-            <footer className="footer">
-                <p>&copy; 2024 IYIP Platform. All rights reserved.</p>
-            </footer>
-        </>
+        </div>
     );
 };
 
