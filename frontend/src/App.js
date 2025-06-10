@@ -16,7 +16,7 @@ import Submissions from './pages/Submissions';
 import Communities from './pages/Communities';
 
 // Auth Context
-import { AuthProvider, useAuth } from './context/AuthContext';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
 
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {

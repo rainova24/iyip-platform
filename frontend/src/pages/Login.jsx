@@ -1,60 +1,83 @@
+// src/pages/Login.jsx
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
-import Header from '../components/layout/Header';
-import Footer from '../components/layout/Footer';
-import Alert from '../components/common/Alert';
+import { useAuth } from '../contexts/AuthContext';
 
 const Login = () => {
     const [formData, setFormData] = useState({
         email: '',
         password: ''
     });
-    const [alert, setAlert] = useState(null);
+    const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
 
     const { login } = useAuth();
     const navigate = useNavigate();
 
     const handleChange = (e) => {
-        setFormData({
-            ...formData,
-            [e.target.name]: e.target.value
-        });
+        const { name, value } = e.target;
+        setFormData(prev => ({
+            ...prev,
+            [name]: value
+        }));
+        // Clear error when user types
+        if (error) setError('');
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        setLoading(true);
 
-        try {
-            await login(formData.email, formData.password);
+        // Basic validation
+        if (!formData.email || !formData.password) {
+            setError('Please fill in all fields');
+            return;
+        }
+
+        setLoading(true);
+        setError('');
+
+        const result = await login(formData.email, formData.password);
+
+        if (result.success) {
             navigate('/dashboard');
-        } catch (error) {
-            setAlert({
-                message: 'Login failed. Please check your credentials.',
-                type: 'danger'
-            });
-        } finally {
+        } else {
+            setError(result.message);
             setLoading(false);
         }
     };
 
     return (
-        <div>
-            <Header />
+        <>
+            <header className="header">
+                <div className="container">
+                    <Link to="/" className="logo">
+                        <span>🎓</span> IYIP Platform
+                    </Link>
+                    <nav>
+                        <ul className="nav-menu">
+                            <li><Link to="/">Home</Link></li>
+                            <li><Link to="/register">Register</Link></li>
+                        </ul>
+                    </nav>
+                </div>
+            </header>
 
             <div className="container">
-                {alert && (
-                    <Alert
-                        message={alert.message}
-                        type={alert.type}
-                        onClose={() => setAlert(null)}
-                    />
-                )}
-
-                <div className="panel" style={{ maxWidth: '500px', margin: '50px auto' }}>
+                <div className="panel" style={{ maxWidth: '450px', margin: '3rem auto' }}>
                     <h1 className="panel-header">Login</h1>
+
+                    {error && (
+                        <div className="alert alert-danger">
+                            {error}
+                            <button
+                                className="alert-close"
+                                onClick={() => setError('')}
+                            >
+                                ×
+                            </button>
+                        </div>
+                    )}
+
                     <form onSubmit={handleSubmit}>
                         <div className="form-group">
                             <label htmlFor="email">Email</label>
@@ -64,10 +87,13 @@ const Login = () => {
                                 name="email"
                                 value={formData.email}
                                 onChange={handleChange}
+                                placeholder="user@iyip.com"
                                 required
                                 disabled={loading}
+                                autoFocus
                             />
                         </div>
+
                         <div className="form-group">
                             <label htmlFor="password">Password</label>
                             <input
@@ -76,22 +102,42 @@ const Login = () => {
                                 name="password"
                                 value={formData.password}
                                 onChange={handleChange}
+                                placeholder="Enter your password"
                                 required
                                 disabled={loading}
                             />
                         </div>
-                        <button type="submit" className="btn" disabled={loading}>
-                            {loading ? 'Logging in...' : 'Login'}
+
+                        <button
+                            type="submit"
+                            className="btn"
+                            disabled={loading}
+                            style={{ width: '100%' }}
+                        >
+                            {loading ? (
+                                <>
+                                    <span className="loading-spinner"></span>
+                                    <span style={{ marginLeft: '0.5rem' }}>Logging in...</span>
+                                </>
+                            ) : (
+                                'Login'
+                            )}
                         </button>
+
+                        <p className="text-center mt-3">
+                            Don't have an account?{' '}
+                            <Link to="/register" style={{ color: 'var(--primary-orange)' }}>
+                                Register here
+                            </Link>
+                        </p>
                     </form>
-                    <p style={{ marginTop: '20px' }}>
-                        Don't have an account? <Link to="/register">Register here</Link>
-                    </p>
                 </div>
             </div>
 
-            <Footer />
-        </div>
+            <footer className="footer">
+                <p>&copy; 2024 IYIP Platform. All rights reserved.</p>
+            </footer>
+        </>
     );
 };
 
