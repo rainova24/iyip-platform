@@ -66,6 +66,8 @@ public class SecurityConfig {
                         .requestMatchers("/api/journals/{id}").permitAll()
                         .requestMatchers("/api/communities/**").permitAll()
                         .requestMatchers("/error").permitAll()
+                        // Tambahkan ini untuk frontend React:
+                        .requestMatchers("/", "/static/**", "/*.js", "/*.css", "/*.png", "/*.jpg", "/*.ico").permitAll()
 
                         // Admin only endpoints
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")

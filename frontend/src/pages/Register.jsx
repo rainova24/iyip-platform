@@ -1,9 +1,12 @@
 // src/pages/Register.jsx
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
+import authService from '../services/authService'; // Default import, bukan { authService }
 
 const Register = () => {
+    const navigate = useNavigate();
+    const [loading, setLoading] = useState(false);
+    const [errors, setErrors] = useState({});
     const [formData, setFormData] = useState({
         name: '',
         nim: '',
@@ -16,11 +19,6 @@ const Register = () => {
         province: '',
         city: ''
     });
-    const [error, setError] = useState('');
-    const [loading, setLoading] = useState(false);
-
-    const { register } = useAuth();
-    const navigate = useNavigate();
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -28,187 +26,208 @@ const Register = () => {
             ...prev,
             [name]: value
         }));
-        if (error) setError('');
+
+        // Clear error when user starts typing
+        if (errors[name]) {
+            setErrors(prev => ({
+                ...prev,
+                [name]: ''
+            }));
+        }
     };
 
     const validateForm = () => {
-        if (!formData.name || !formData.email || !formData.password) {
-            setError('Name, email, and password are required');
-            return false;
+        const newErrors = {};
+
+        // Required fields validation
+        if (!formData.name.trim()) {
+            newErrors.name = 'Full name is required';
         }
 
-        if (formData.password.length < 6) {
-            setError('Password must be at least 6 characters long');
-            return false;
+        if (!formData.email.trim()) {
+            newErrors.email = 'Email is required';
+        } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+            newErrors.email = 'Please enter a valid email address';
         }
 
-        if (formData.password !== formData.confirmPassword) {
-            setError('Passwords do not match');
-            return false;
+        if (!formData.password) {
+            newErrors.password = 'Password is required';
+        } else if (formData.password.length < 6) {
+            newErrors.password = 'Password must be at least 6 characters';
         }
 
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(formData.email)) {
-            setError('Please enter a valid email address');
-            return false;
+        if (!formData.confirmPassword) {
+            newErrors.confirmPassword = 'Please confirm your password';
+        } else if (formData.password !== formData.confirmPassword) {
+            newErrors.confirmPassword = 'Passwords do not match';
         }
 
-        return true;
+        return newErrors;
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        if (!validateForm()) {
+        const formErrors = validateForm();
+        if (Object.keys(formErrors).length > 0) {
+            setErrors(formErrors);
             return;
         }
 
         setLoading(true);
-        setError('');
+        setErrors({});
 
-        const { confirmPassword, ...registrationData } = formData;
-        const result = await register(registrationData);
+        try {
+            // Remove confirmPassword from data sent to backend
+            const { confirmPassword, ...registrationData } = formData;
 
-        if (result.success) {
-            // Show success message and redirect to login
-            navigate('/login', {
-                state: { message: 'Registration successful! Please login.' }
-            });
-        } else {
-            setError(result.message);
+            // Call the register method from authService
+            const response = await authService.register(registrationData);
+
+            // Show success message or redirect
+            alert('Registration successful! Please login to continue.');
+            navigate('/login');
+        } catch (error) {
+            console.error('Registration error:', error);
+
+            if (error.response?.data?.message) {
+                setErrors({ submit: error.response.data.message });
+            } else if (error.response?.data?.error) {
+                setErrors({ submit: error.response.data.error });
+            } else {
+                setErrors({ submit: 'Registration failed. Please try again.' });
+            }
+        } finally {
             setLoading(false);
         }
     };
 
     return (
-        <>
-            <header className="header">
-                <div className="container">
-                    <Link to="/" className="logo">
-                        <span>🎓</span> IYIP Platform
-                    </Link>
-                    <nav>
-                        <ul className="nav-menu">
-                            <li><Link to="/">Home</Link></li>
-                            <li><Link to="/login">Login</Link></li>
-                        </ul>
-                    </nav>
-                </div>
-            </header>
-
-            <div className="container">
-                <div className="panel" style={{ maxWidth: '600px', margin: '2rem auto' }}>
-                    <h1 className="panel-header">Create New Account</h1>
-
-                    {error && (
-                        <div className="alert alert-danger">
-                            {error}
-                            <button
-                                className="alert-close"
-                                onClick={() => setError('')}
-                            >
-                                ×
-                            </button>
+        <div className="auth-page">
+            <div className="auth-container">
+                <div className="auth-form-wrapper">
+                    {/* Header */}
+                    <div className="auth-header">
+                        <div className="auth-logo">
+                            <div className="logo-icon">I</div>
+                            <span className="logo-text">IYIP Platform</span>
                         </div>
-                    )}
+                        <h1 className="auth-title">Create New Account</h1>
+                        <p className="auth-subtitle">Join Itenas Youth Innovation Platform</p>
+                    </div>
 
-                    <form onSubmit={handleSubmit}>
+                    {/* Form */}
+                    <form className="auth-form" onSubmit={handleSubmit}>
+                        {/* Error Message */}
+                        {errors.submit && (
+                            <div className="alert alert-error">
+                                <i className="icon-error">⚠</i>
+                                {errors.submit}
+                            </div>
+                        )}
+
                         {/* Basic Information */}
-                        <div style={{ marginBottom: '2rem' }}>
-                            <h3 style={{ color: 'var(--primary-orange)', marginBottom: '1rem' }}>
-                                Basic Information
-                            </h3>
+                        <div className="form-section">
+                            <h3 className="section-title">Basic Information</h3>
 
-                            <div className="form-group">
-                                <label htmlFor="name">Full Name *</label>
-                                <input
-                                    type="text"
-                                    id="name"
-                                    name="name"
-                                    value={formData.name}
-                                    onChange={handleChange}
-                                    placeholder="Enter your full name"
-                                    required
-                                    disabled={loading}
-                                />
+                            <div className="form-row">
+                                <div className="form-group">
+                                    <label className="form-label">
+                                        Full Name <span className="required">*</span>
+                                    </label>
+                                    <input
+                                        type="text"
+                                        name="name"
+                                        className={`form-control ${errors.name ? 'error' : ''}`}
+                                        value={formData.name}
+                                        onChange={handleChange}
+                                        placeholder="Enter your full name"
+                                        disabled={loading}
+                                    />
+                                    {errors.name && <span className="error-text">{errors.name}</span>}
+                                </div>
+
+                                <div className="form-group">
+                                    <label className="form-label">NIM (Student ID)</label>
+                                    <input
+                                        type="text"
+                                        name="nim"
+                                        className="form-control"
+                                        value={formData.nim}
+                                        onChange={handleChange}
+                                        placeholder="Enter your NIM"
+                                        disabled={loading}
+                                    />
+                                </div>
                             </div>
 
                             <div className="form-group">
-                                <label htmlFor="nim">NIM (Student ID)</label>
-                                <input
-                                    type="text"
-                                    id="nim"
-                                    name="nim"
-                                    value={formData.nim}
-                                    onChange={handleChange}
-                                    placeholder="Enter your NIM"
-                                    disabled={loading}
-                                />
-                            </div>
-
-                            <div className="form-group">
-                                <label htmlFor="email">Email *</label>
+                                <label className="form-label">
+                                    Email Address <span className="required">*</span>
+                                </label>
                                 <input
                                     type="email"
-                                    id="email"
                                     name="email"
+                                    className={`form-control ${errors.email ? 'error' : ''}`}
                                     value={formData.email}
                                     onChange={handleChange}
                                     placeholder="your.email@example.com"
-                                    required
                                     disabled={loading}
                                 />
+                                {errors.email && <span className="error-text">{errors.email}</span>}
                             </div>
                         </div>
 
                         {/* Security */}
-                        <div style={{ marginBottom: '2rem' }}>
-                            <h3 style={{ color: 'var(--primary-orange)', marginBottom: '1rem' }}>
-                                Security
-                            </h3>
+                        <div className="form-section">
+                            <h3 className="section-title">Security</h3>
 
-                            <div className="form-group">
-                                <label htmlFor="password">Password *</label>
-                                <input
-                                    type="password"
-                                    id="password"
-                                    name="password"
-                                    value={formData.password}
-                                    onChange={handleChange}
-                                    placeholder="At least 6 characters"
-                                    required
-                                    disabled={loading}
-                                />
-                            </div>
+                            <div className="form-row">
+                                <div className="form-group">
+                                    <label className="form-label">
+                                        Password <span className="required">*</span>
+                                    </label>
+                                    <input
+                                        type="password"
+                                        name="password"
+                                        className={`form-control ${errors.password ? 'error' : ''}`}
+                                        value={formData.password}
+                                        onChange={handleChange}
+                                        placeholder="Minimum 6 characters"
+                                        disabled={loading}
+                                    />
+                                    {errors.password && <span className="error-text">{errors.password}</span>}
+                                </div>
 
-                            <div className="form-group">
-                                <label htmlFor="confirmPassword">Confirm Password *</label>
-                                <input
-                                    type="password"
-                                    id="confirmPassword"
-                                    name="confirmPassword"
-                                    value={formData.confirmPassword}
-                                    onChange={handleChange}
-                                    placeholder="Re-enter your password"
-                                    required
-                                    disabled={loading}
-                                />
+                                <div className="form-group">
+                                    <label className="form-label">
+                                        Confirm Password <span className="required">*</span>
+                                    </label>
+                                    <input
+                                        type="password"
+                                        name="confirmPassword"
+                                        className={`form-control ${errors.confirmPassword ? 'error' : ''}`}
+                                        value={formData.confirmPassword}
+                                        onChange={handleChange}
+                                        placeholder="Re-enter your password"
+                                        disabled={loading}
+                                    />
+                                    {errors.confirmPassword && <span className="error-text">{errors.confirmPassword}</span>}
+                                </div>
                             </div>
                         </div>
 
                         {/* Additional Information */}
-                        <div style={{ marginBottom: '2rem' }}>
-                            <h3 style={{ color: 'var(--primary-orange)', marginBottom: '1rem' }}>
-                                Additional Information (Optional)
-                            </h3>
+                        <div className="form-section">
+                            <h3 className="section-title">Additional Information <span className="optional">(Optional)</span></h3>
 
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                            <div className="form-row">
                                 <div className="form-group">
-                                    <label htmlFor="phone">Phone Number</label>
+                                    <label className="form-label">Phone Number</label>
                                     <input
                                         type="tel"
-                                        id="phone"
                                         name="phone"
+                                        className="form-control"
                                         value={formData.phone}
                                         onChange={handleChange}
                                         placeholder="+62 xxx xxx xxxx"
@@ -217,90 +236,113 @@ const Register = () => {
                                 </div>
 
                                 <div className="form-group">
-                                    <label htmlFor="birthDate">Birth Date</label>
+                                    <label className="form-label">Birth Date</label>
                                     <input
                                         type="date"
-                                        id="birthDate"
                                         name="birthDate"
+                                        className="form-control"
                                         value={formData.birthDate}
                                         onChange={handleChange}
                                         disabled={loading}
                                     />
                                 </div>
+                            </div>
 
+                            <div className="form-row">
                                 <div className="form-group">
-                                    <label htmlFor="gender">Gender</label>
+                                    <label className="form-label">Gender</label>
                                     <select
-                                        id="gender"
                                         name="gender"
+                                        className="form-control"
                                         value={formData.gender}
                                         onChange={handleChange}
                                         disabled={loading}
                                     >
                                         <option value="">Select Gender</option>
-                                        <option value="Laki-laki">Male</option>
-                                        <option value="Perempuan">Female</option>
+                                        <option value="LAKI_LAKI">Male</option>
+                                        <option value="PEREMPUAN">Female</option>
                                     </select>
                                 </div>
 
                                 <div className="form-group">
-                                    <label htmlFor="province">Province</label>
+                                    <label className="form-label">Province</label>
                                     <input
                                         type="text"
-                                        id="province"
                                         name="province"
+                                        className="form-control"
                                         value={formData.province}
                                         onChange={handleChange}
                                         placeholder="e.g., West Java"
                                         disabled={loading}
                                     />
                                 </div>
+                            </div>
 
-                                <div className="form-group" style={{ gridColumn: 'span 2' }}>
-                                    <label htmlFor="city">City</label>
-                                    <input
-                                        type="text"
-                                        id="city"
-                                        name="city"
-                                        value={formData.city}
-                                        onChange={handleChange}
-                                        placeholder="e.g., Bandung"
-                                        disabled={loading}
-                                    />
-                                </div>
+                            <div className="form-group">
+                                <label className="form-label">City</label>
+                                <input
+                                    type="text"
+                                    name="city"
+                                    className="form-control"
+                                    value={formData.city}
+                                    onChange={handleChange}
+                                    placeholder="e.g., Bandung"
+                                    disabled={loading}
+                                />
                             </div>
                         </div>
 
+                        {/* Submit Button */}
                         <button
                             type="submit"
-                            className="btn"
+                            className="btn btn-primary btn-full"
                             disabled={loading}
-                            style={{ width: '100%' }}
                         >
                             {loading ? (
                                 <>
-                                    <span className="loading-spinner"></span>
-                                    <span style={{ marginLeft: '0.5rem' }}>Creating Account...</span>
+                                    <div className="loading-spinner"></div>
+                                    Creating Account...
                                 </>
                             ) : (
                                 'Create Account'
                             )}
                         </button>
 
-                        <p className="text-center mt-3">
-                            Already have an account?{' '}
-                            <Link to="/login" style={{ color: 'var(--primary-orange)' }}>
-                                Login here
-                            </Link>
-                        </p>
+                        {/* Login Link */}
+                        <div className="auth-footer">
+                            <p>
+                                Already have an account?{' '}
+                                <Link to="/login" className="auth-link">
+                                    Sign in here
+                                </Link>
+                            </p>
+                        </div>
                     </form>
                 </div>
-            </div>
 
-            <footer className="footer">
-                <p>&copy; 2024 IYIP Platform. All rights reserved.</p>
-            </footer>
-        </>
+                {/* Decorative Side */}
+                <div className="auth-decoration">
+                    <div className="decoration-content">
+                        <h2>Welcome to IYIP</h2>
+                        <p>Join our community of young innovators and researchers at Itenas.</p>
+                        <div className="decoration-features">
+                            <div className="feature-item">
+                                <div className="feature-icon">📚</div>
+                                <span>Access Research Journals</span>
+                            </div>
+                            <div className="feature-item">
+                                <div className="feature-icon">🎯</div>
+                                <span>Join Innovation Events</span>
+                            </div>
+                            <div className="feature-item">
+                                <div className="feature-icon">🤝</div>
+                                <span>Connect with Communities</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     );
 };
 

@@ -29,60 +29,81 @@ function AppContent() {
 
     return (
         <div className="App">
-            <Navbar />
-            <div className="container-fluid">
-                <Routes>
-                    <Route path="/" element={<Home />} />
-                    <Route
-                        path="/login"
-                        element={!isAuthenticated ? <Login /> : <Navigate to="/dashboard" />}
-                    />
-                    <Route
-                        path="/register"
-                        element={!isAuthenticated ? <Register /> : <Navigate to="/dashboard" />}
-                    />
-                    <Route
-                        path="/dashboard"
-                        element={
-                            <ProtectedRoute>
+            {/* Only show Navbar for authenticated users or on Home page */}
+            <Routes>
+                <Route
+                    path="/"
+                    element={
+                        <>
+                            <Navbar />
+                            <Home />
+                        </>
+                    }
+                />
+                <Route
+                    path="/login"
+                    element={!isAuthenticated ? <Login /> : <Navigate to="/dashboard" />}
+                />
+                <Route
+                    path="/register"
+                    element={!isAuthenticated ? <Register /> : <Navigate to="/dashboard" />}
+                />
+                <Route
+                    path="/dashboard"
+                    element={
+                        <ProtectedRoute>
+                            <Navbar />
+                            <div className="main-content">
                                 <Dashboard />
-                            </ProtectedRoute>
-                        }
-                    />
-                    <Route
-                        path="/journals"
-                        element={
-                            <ProtectedRoute>
+                            </div>
+                        </ProtectedRoute>
+                    }
+                />
+                <Route
+                    path="/journals"
+                    element={
+                        <ProtectedRoute>
+                            <Navbar />
+                            <div className="main-content">
                                 <Journals />
-                            </ProtectedRoute>
-                        }
-                    />
-                    <Route
-                        path="/events"
-                        element={
-                            <ProtectedRoute>
+                            </div>
+                        </ProtectedRoute>
+                    }
+                />
+                <Route
+                    path="/events"
+                    element={
+                        <ProtectedRoute>
+                            <Navbar />
+                            <div className="main-content">
                                 <Events />
-                            </ProtectedRoute>
-                        }
-                    />
-                    <Route
-                        path="/submissions"
-                        element={
-                            <ProtectedRoute>
+                            </div>
+                        </ProtectedRoute>
+                    }
+                />
+                <Route
+                    path="/submissions"
+                    element={
+                        <ProtectedRoute>
+                            <Navbar />
+                            <div className="main-content">
                                 <Submissions />
-                            </ProtectedRoute>
-                        }
-                    />
-                    <Route
-                        path="/communities"
-                        element={
-                            <ProtectedRoute>
+                            </div>
+                        </ProtectedRoute>
+                    }
+                />
+                <Route
+                    path="/communities"
+                    element={
+                        <ProtectedRoute>
+                            <Navbar />
+                            <div className="main-content">
                                 <Communities />
-                            </ProtectedRoute>
-                        }
-                    />
-                </Routes>
-            </div>
+                            </div>
+                        </ProtectedRoute>
+                    }
+                />
+            </Routes>
         </div>
     );
 }
