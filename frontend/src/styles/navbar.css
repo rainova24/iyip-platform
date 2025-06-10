@@ -319,3 +319,120 @@
     transform: translateY(0);
   }
 }
+
+/* Improved Navbar User Info CSS - Replace existing user-info styles */
+
+/* Better contrast for user info */
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 1rem;
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid rgba(255, 107, 53, 0.2);
+  border-radius: 25px;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.user-info:hover {
+  background: rgba(255, 255, 255, 1);
+  border-color: var(--primary-orange);
+  box-shadow: 0 4px 12px rgba(255, 107, 53, 0.15);
+  transform: translateY(-1px);
+}
+
+.user-avatar {
+  width: 32px;
+  height: 32px;
+  background: linear-gradient(135deg, var(--primary-orange), var(--secondary-orange));
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 700;
+  font-size: 14px;
+  box-shadow: 0 2px 8px rgba(255, 107, 53, 0.3);
+  border: 2px solid white;
+}
+
+.user-name {
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--text-dark);
+  white-space: nowrap;
+}
+
+/* Alternative darker background option */
+.user-info.dark {
+  background: var(--text-dark);
+  border-color: var(--text-dark);
+}
+
+.user-info.dark .user-name {
+  color: white;
+}
+
+.user-info.dark:hover {
+  background: var(--secondary-dark);
+  border-color: var(--secondary-dark);
+}
+
+/* Alternative colored background option */
+.user-info.colored {
+  background: linear-gradient(135deg, var(--primary-orange), var(--secondary-orange));
+  border: none;
+}
+
+.user-info.colored .user-name {
+  color: white;
+  font-weight: 600;
+}
+
+.user-info.colored .user-avatar {
+  background: rgba(255, 255, 255, 0.2);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+.user-info.colored:hover {
+  background: linear-gradient(135deg, var(--dark-orange), var(--primary-orange));
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(255, 107, 53, 0.3);
+}
+
+/* Mobile user info improvements */
+.mobile-user-info {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid rgba(255, 107, 53, 0.2);
+  border-radius: var(--border-radius-sm);
+  margin-bottom: 1rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.mobile-user-info .user-avatar {
+  width: 40px;
+  height: 40px;
+  font-size: 16px;
+}
+
+.mobile-user-info span {
+  font-weight: 600;
+  color: var(--text-dark);
+}
+
+/* Logout button improvements */
+.logout-btn {
+  background: transparent;
+  color: var(--primary-orange);
+  border: 1.5px solid var(--primary-orange);
+  padding: 0.4rem 0.8rem;
+  font-size: 13px;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  border-radius: 6px;
+}

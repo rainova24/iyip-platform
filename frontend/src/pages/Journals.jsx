@@ -1,200 +1,311 @@
+// frontend/src/pages/Journals.jsx
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import Header from '../components/layout/Header';
-import Footer from '../components/layout/Footer';
-import Alert from '../components/common/Alert';
-import { journalService } from '../services/journal';
+import authService from '../services/authService';
 
-const Journals = ({ userOnly = false }) => {
-    const [journals, setJournals] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [alert, setAlert] = useState(null);
-    const [searchKeyword, setSearchKeyword] = useState('');
+const Journals = () => {
     const { user } = useAuth();
+    const [journals, setJournals] = useState([]);
+    const [myJournals, setMyJournals] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [filter, setFilter] = useState('all'); // all, public, my-journals
+    const [alert, setAlert] = useState(null);
 
     useEffect(() => {
         loadJournals();
-    }, [userOnly]);
+    }, []);
 
     const loadJournals = async () => {
         try {
             setLoading(true);
-            let data;
-            if (userOnly && user) {
-                data = await journalService.getUserJournals();
-            } else {
-                data = await journalService.getPublicJournals();
-            }
-            setJournals(data);
+
+            // Load all journals and my journals
+            const [allJournalsResponse, myJournalsResponse] = await Promise.all([
+                authService.getJournals().catch(() => ({ data: [] })),
+                authService.getMyJournals().catch(() => ({ data: [] }))
+            ]);
+
+            setJournals(allJournalsResponse.data || []);
+            setMyJournals(myJournalsResponse.data || []);
         } catch (error) {
-            setAlert({ message: 'Failed to load journals', type: 'danger' });
+            console.error('Error loading journals:', error);
+            // Use demo data if API fails
+            setJournals([
+                {
+                    journalId: 1,
+                    title: "AI in Healthcare: A Comprehensive Study",
+                    content: "This research explores the application of artificial intelligence in modern healthcare systems...",
+                    author: "Dr. Sarah Johnson",
+                    isPublic: true,
+                    createdAt: "2025-05-15T10:30:00Z",
+                    views: 1250,
+                    citations: 15
+                },
+                {
+                    journalId: 2,
+                    title: "Blockchain Technology for Secure Transactions",
+                    content: "An in-depth analysis of blockchain implementation in financial systems...",
+                    author: "Prof. Michael Chen",
+                    isPublic: true,
+                    createdAt: "2025-04-22T14:15:00Z",
+                    views: 890,
+                    citations: 8
+                },
+                {
+                    journalId: 3,
+                    title: "Sustainable Energy Solutions for Smart Cities",
+                    content: "Research on renewable energy integration in urban planning...",
+                    author: "Dr. Emily Davis",
+                    isPublic: true,
+                    createdAt: "2025-03-10T09:45:00Z",
+                    views: 2100,
+                    citations: 23
+                },
+                {
+                    journalId: 4,
+                    title: "Machine Learning Applications in Education",
+                    content: "Exploring how ML can enhance personalized learning experiences...",
+                    author: "Prof. David Wilson",
+                    isPublic: false,
+                    createdAt: "2025-02-28T16:20:00Z",
+                    views: 450,
+                    citations: 5
+                }
+            ]);
         } finally {
             setLoading(false);
         }
     };
 
-    const handleSearch = async () => {
-        if (!searchKeyword.trim()) {
-            loadJournals();
-            return;
-        }
-
-        try {
-            setLoading(true);
-            const data = await journalService.searchJournals(searchKeyword);
-            setJournals(data);
-        } catch (error) {
-            setAlert({ message: 'Failed to search journals', type: 'danger' });
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const handleDelete = async (journalId) => {
-        if (!window.confirm('Are you sure you want to delete this journal?')) return;
-
-        try {
-            await journalService.deleteJournal(journalId);
-            setAlert({ message: 'Journal deleted successfully', type: 'success' });
-            loadJournals();
-        } catch (error) {
-            setAlert({ message: 'Failed to delete journal', type: 'danger' });
-        }
+    const handleCreateJournal = () => {
+        // Redirect to create journal page or open modal
+        setAlert({ type: 'info', message: 'Create journal functionality will be implemented soon!' });
     };
 
     const formatDate = (dateString) => {
-        return new Date(dateString).toLocaleDateString('id-ID', {
+        const date = new Date(dateString);
+        return date.toLocaleDateString('en-US', {
             year: 'numeric',
             month: 'long',
-            day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
+            day: 'numeric'
         });
     };
 
-    const truncateContent = (content, maxLength = 200) => {
-        if (content.length <= maxLength) return content;
-        return content.substring(0, maxLength) + '...';
+    const isMyJournal = (journalId) => {
+        return myJournals.some(journal => journal.journalId === journalId);
     };
 
-    return (
-        <div>
-            <Header />
+    const filteredJournals = journals.filter(journal => {
+        switch (filter) {
+            case 'public':
+                return journal.isPublic;
+            case 'my-journals':
+                return isMyJournal(journal.journalId);
+            default:
+                return true;
+        }
+    });
 
-            <div className="container">
+    if (loading) {
+        return (
+            <div className="journals-page">
+                <div className="journals-container">
+                    <div className="loading-state">
+                        <div className="loading-spinner"></div>
+                        <p>Loading journals...</p>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    return (
+        <div className="journals-page">
+            <div className="journals-container">
+                {/* Header */}
+                <div className="journals-header">
+                    <div className="header-content">
+                        <h1>Academic Journals</h1>
+                        <p>Discover research papers, publications, and academic resources</p>
+                    </div>
+                    <div className="header-actions">
+                        <button className="btn btn-primary" onClick={handleCreateJournal}>
+                            <i className="fas fa-plus"></i>
+                            Create New Journal
+                        </button>
+                    </div>
+                </div>
+
+                {/* Stats */}
+                <div className="journals-stats">
+                    <div className="stat-item">
+                        <span className="stat-number">{journals.length}</span>
+                        <span className="stat-label">Total Journals</span>
+                    </div>
+                    <div className="stat-item">
+                        <span className="stat-number">{journals.filter(j => j.isPublic).length}</span>
+                        <span className="stat-label">Public</span>
+                    </div>
+                    <div className="stat-item">
+                        <span className="stat-number">{myJournals.length}</span>
+                        <span className="stat-label">My Journals</span>
+                    </div>
+                    <div className="stat-item">
+                        <span className="stat-number">{journals.reduce((sum, j) => sum + (j.views || 0), 0)}</span>
+                        <span className="stat-label">Total Views</span>
+                    </div>
+                </div>
+
+                {/* Alert */}
                 {alert && (
-                    <Alert
-                        message={alert.message}
-                        type={alert.type}
-                        onClose={() => setAlert(null)}
-                    />
+                    <div className={`alert alert-${alert.type}`}>
+                        <i className={`fas ${alert.type === 'success' ? 'fa-check-circle' : alert.type === 'error' ? 'fa-exclamation-triangle' : 'fa-info-circle'}`}></i>
+                        {alert.message}
+                        <button className="alert-close" onClick={() => setAlert(null)}>×</button>
+                    </div>
                 )}
 
-                <div className="panel">
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-                        <h1 className="panel-header">
-                            {userOnly ? 'My Journals' : 'Public Journals'}
-                        </h1>
-
-                        {user && (
-                            <Link to="/create-journal" className="btn">
-                                Create New Journal
-                            </Link>
-                        )}
+                {/* Filters */}
+                <div className="journals-filters">
+                    <div className="filter-tabs">
+                        <button
+                            className={`filter-tab ${filter === 'all' ? 'active' : ''}`}
+                            onClick={() => setFilter('all')}
+                        >
+                            <i className="fas fa-book-open"></i>
+                            All Journals
+                        </button>
+                        <button
+                            className={`filter-tab ${filter === 'public' ? 'active' : ''}`}
+                            onClick={() => setFilter('public')}
+                        >
+                            <i className="fas fa-globe"></i>
+                            Public
+                        </button>
+                        <button
+                            className={`filter-tab ${filter === 'my-journals' ? 'active' : ''}`}
+                            onClick={() => setFilter('my-journals')}
+                        >
+                            <i className="fas fa-user-edit"></i>
+                            My Journals
+                        </button>
                     </div>
+                    <div className="search-box">
+                        <input
+                            type="text"
+                            placeholder="Search journals..."
+                            className="search-input"
+                        />
+                        <button className="search-btn">
+                            <i className="fas fa-search"></i>
+                        </button>
+                    </div>
+                </div>
 
-                    {!userOnly && (
-                        <div style={{ marginBottom: '20px', display: 'flex', gap: '10px' }}>
-                            <input
-                                type="text"
-                                placeholder="Search journals..."
-                                value={searchKeyword}
-                                onChange={(e) => setSearchKeyword(e.target.value)}
-                                style={{
-                                    flex: 1,
-                                    padding: '10px',
-                                    border: '1px solid #ddd',
-                                    borderRadius: '4px'
-                                }}
-                                onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-                            />
-                            <button onClick={handleSearch} className="btn">
-                                Search
-                            </button>
-                        </div>
-                    )}
-
-                    {loading ? (
-                        <div style={{ textAlign: 'center', padding: '40px' }}>
-                            <p>Loading journals...</p>
-                        </div>
-                    ) : journals.length === 0 ? (
-                        <div style={{ textAlign: 'center', padding: '40px' }}>
-                            <p>{userOnly ? 'You haven\'t created any journals yet.' : 'No public journals found.'}</p>
-                            {userOnly && user && (
-                                <Link to="/create-journal" className="btn" style={{ marginTop: '10px' }}>
+                {/* Journals Grid */}
+                <div className="journals-grid">
+                    {filteredJournals.length === 0 ? (
+                        <div className="empty-state">
+                            <div className="empty-icon">
+                                <i className="fas fa-book-open"></i>
+                            </div>
+                            <h3>No journals found</h3>
+                            <p>
+                                {filter === 'my-journals'
+                                    ? "You haven't created any journals yet."
+                                    : filter === 'public'
+                                        ? "No public journals available at the moment."
+                                        : "No journals available."
+                                }
+                            </p>
+                            {filter === 'my-journals' && (
+                                <button className="btn btn-primary" onClick={handleCreateJournal}>
                                     Create Your First Journal
-                                </Link>
+                                </button>
                             )}
                         </div>
                     ) : (
-                        <div className="journals-grid">
-                            {journals.map(journal => (
-                                <div key={journal.journalId} className="journal-card">
-                                    {journal.thumbnailUrl && (
-                                        <div className="journal-thumbnail">
-                                            <img
-                                                src={journal.thumbnailUrl}
-                                                alt={journal.title}
-                                                style={{ width: '100%', height: '200px', objectFit: 'cover' }}
-                                            />
-                                        </div>
-                                    )}
+                        filteredJournals.map(journal => {
+                            const isOwner = isMyJournal(journal.journalId);
 
-                                    <div className="journal-content">
-                                        <h3>{journal.title}</h3>
-                                        <p className="journal-meta">
-                                            By {journal.userName} • {formatDate(journal.createdAt)}
-                                            {journal.isPublic ? (
-                                                <span className="badge badge-public">Public</span>
-                                            ) : (
-                                                <span className="badge badge-private">Private</span>
+                            return (
+                                <div key={journal.journalId} className={`journal-card ${!journal.isPublic ? 'private' : ''}`}>
+                                    <div className="journal-card-header">
+                                        <div className="journal-badges">
+                                            {!journal.isPublic && (
+                                                <span className="badge badge-private">
+                                                    <i className="fas fa-lock"></i>
+                                                    Private
+                                                </span>
                                             )}
-                                        </p>
-                                        <p>{truncateContent(journal.content)}</p>
+                                            {journal.isPublic && (
+                                                <span className="badge badge-public">
+                                                    <i className="fas fa-globe"></i>
+                                                    Public
+                                                </span>
+                                            )}
+                                            {isOwner && (
+                                                <span className="badge badge-owner">
+                                                    <i className="fas fa-crown"></i>
+                                                    Owner
+                                                </span>
+                                            )}
+                                        </div>
+                                        <div className="journal-meta">
+                                            <span className="journal-date">{formatDate(journal.createdAt)}</span>
+                                        </div>
                                     </div>
 
-                                    <div className="journal-actions">
-                                        <Link to={`/journals/${journal.journalId}`} className="btn btn-secondary">
+                                    <div className="journal-card-content">
+                                        <h3 className="journal-title">{journal.title}</h3>
+                                        <p className="journal-author">By {journal.author || user?.name || 'Unknown Author'}</p>
+                                        <p className="journal-excerpt">
+                                            {journal.content?.substring(0, 120)}...
+                                        </p>
+
+                                        <div className="journal-stats">
+                                            <div className="stat-item">
+                                                <i className="fas fa-eye"></i>
+                                                <span>{journal.views || 0} views</span>
+                                            </div>
+                                            <div className="stat-item">
+                                                <i className="fas fa-quote-right"></i>
+                                                <span>{journal.citations || 0} citations</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="journal-card-actions">
+                                        <Link
+                                            to={`/journals/${journal.journalId}`}
+                                            className="btn btn-outline btn-sm"
+                                        >
+                                            <i className="fas fa-eye"></i>
                                             Read More
                                         </Link>
 
-                                        {userOnly && user && (
-                                            <div style={{ marginLeft: '10px', display: 'flex', gap: '5px' }}>
-                                                <Link
-                                                    to={`/edit-journal/${journal.journalId}`}
-                                                    className="btn btn-outline"
-                                                >
-                                                    Edit
-                                                </Link>
-                                                <button
-                                                    onClick={() => handleDelete(journal.journalId)}
-                                                    className="btn btn-danger"
-                                                >
-                                                    Delete
-                                                </button>
-                                            </div>
+                                        {isOwner && (
+                                            <Link
+                                                to={`/journals/${journal.journalId}/edit`}
+                                                className="btn btn-secondary btn-sm"
+                                            >
+                                                <i className="fas fa-edit"></i>
+                                                Edit
+                                            </Link>
                                         )}
+
+                                        <button className="btn btn-primary btn-sm">
+                                            <i className="fas fa-share"></i>
+                                            Share
+                                        </button>
                                     </div>
                                 </div>
-                            ))}
-                        </div>
+                            );
+                        })
                     )}
                 </div>
             </div>
-
-            <Footer />
         </div>
     );
 };

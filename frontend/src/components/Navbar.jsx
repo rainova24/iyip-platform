@@ -43,8 +43,8 @@ const Navbar = () => {
             <div className="container nav-wrapper">
                 {/* Brand */}
                 <Link to="/" className="navbar-brand">
-                    <div className="brand-logo"></div>
-                    <span className="brand-text">Itenas Youth Innovation Platform</span>
+                    <div className="brand-logo">I</div>
+                    <span className="brand-text">IYIP Platform</span>
                 </Link>
 
                 {/* Desktop Navigation */}
@@ -98,11 +98,11 @@ const Navbar = () => {
                     )}
                 </div>
 
-                {/* Auth Section */}
+                {/* Auth Section - Always on the right */}
                 <div className="nav-auth">
                     {isAuthenticated ? (
                         <div className="user-menu">
-                            <div className="user-info">
+                            <div className="user-info dark">
                                 <div className="user-avatar">
                                     {user?.name?.charAt(0).toUpperCase() || 'A'}
                                 </div>
@@ -111,7 +111,7 @@ const Navbar = () => {
                                 </span>
                             </div>
                             <button
-                                className="btn btn-outline btn-sm"
+                                className="btn btn-outline btn-sm logout-btn"
                                 onClick={handleLogout}
                             >
                                 Logout
@@ -189,6 +189,12 @@ const Navbar = () => {
                             </Link>
 
                             <div className="mobile-auth-buttons">
+                                <div className="mobile-user-info">
+                                    <div className="user-avatar">
+                                        {user?.name?.charAt(0).toUpperCase() || 'A'}
+                                    </div>
+                                    <span>{user?.name || 'Admin User'}</span>
+                                </div>
                                 <button
                                     className="btn btn-outline w-100"
                                     onClick={handleLogout}
