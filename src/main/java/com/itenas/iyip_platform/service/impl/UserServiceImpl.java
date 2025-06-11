@@ -1,5 +1,11 @@
 package com.itenas.iyip_platform.service.impl;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+
 import com.itenas.iyip_platform.dto.UserDto;
 import com.itenas.iyip_platform.exception.ResourceNotFoundException;
 import com.itenas.iyip_platform.model.entity.Role;
@@ -7,12 +13,8 @@ import com.itenas.iyip_platform.model.entity.User;
 import com.itenas.iyip_platform.repository.RoleRepository;
 import com.itenas.iyip_platform.repository.UserRepository;
 import com.itenas.iyip_platform.service.UserService;
-import lombok.RequiredArgsConstructor;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Service;
 
-import java.util.List;
-import java.util.stream.Collectors;
+import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
@@ -102,5 +104,22 @@ public class UserServiceImpl implements UserService {
         }
 
         return dto;
+    }
+
+    @Override
+    public UserDto updateProfile(String email, UserDto userDto) {
+        User user = userRepository.findByEmail(email)
+            .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        // Update user fields
+        user.setName(userDto.getName());
+        user.setBirthDate(userDto.getBirthDate());
+        user.setGender(userDto.getGender());
+        user.setPhone(userDto.getPhone());
+        user.setProvince(userDto.getProvince());
+        user.setCity(userDto.getCity());
+
+        User savedUser = userRepository.save(user);
+        return mapToDto(savedUser);
     }
 }

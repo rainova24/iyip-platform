@@ -102,14 +102,14 @@ const Navbar = () => {
                 <div className="nav-auth">
                     {isAuthenticated ? (
                         <div className="user-menu">
-                            <div className="user-info dark">
+                            <Link to="/profile" className="user-info dark" style={{ textDecoration: 'none' }}>
                                 <div className="user-avatar">
                                     {user?.name?.charAt(0).toUpperCase() || 'A'}
                                 </div>
                                 <span className="user-name d-none d-sm-inline">
                                     {user?.name || 'Admin User'}
                                 </span>
-                            </div>
+                            </Link>
                             <button
                                 className="btn btn-outline btn-sm logout-btn"
                                 onClick={handleLogout}
@@ -189,12 +189,17 @@ const Navbar = () => {
                             </Link>
 
                             <div className="mobile-auth-buttons">
-                                <div className="mobile-user-info">
+                                <Link
+                                    to="/profile"
+                                    className="mobile-user-info"
+                                    onClick={closeMobileMenu}
+                                    style={{ textDecoration: 'none', color: 'inherit' }}
+                                >
                                     <div className="user-avatar">
                                         {user?.name?.charAt(0).toUpperCase() || 'A'}
                                     </div>
                                     <span>{user?.name || 'Admin User'}</span>
-                                </div>
+                                </Link>
                                 <button
                                     className="btn btn-outline w-100"
                                     onClick={handleLogout}

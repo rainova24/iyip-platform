@@ -12,4 +12,5 @@ public interface UserService {
     void deleteById(Long id);
     UserDto findByEmail(String email);
     User getUserByEmail(String email);
+    UserDto updateProfile(String email, UserDto userDto);
 }

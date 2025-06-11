@@ -4,6 +4,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './styles/style.css';
 import './styles/navbar.css';
+import UserInfo from './pages/UserInfo';
 
 // Components
 import Navbar from './components/Navbar';
@@ -83,6 +84,15 @@ function AppContent() {
                     }
                 />
                 <Route
+                    path="/users"
+                    element={
+                        <ProtectedRoute>
+                            <Navbar />
+                            <UserInfo />
+                        </ProtectedRoute>
+                    }
+                />
+                <Route
                     path="/submissions"
                     element={
                         <ProtectedRoute>
@@ -92,6 +102,15 @@ function AppContent() {
                             </div>
                         </ProtectedRoute>
                     }
+                />
+                <Route 
+                    path="/profile" 
+                    element={
+                        <ProtectedRoute>
+                            <Navbar />
+                            <UserInfo />
+                        </ProtectedRoute>
+                    } 
                 />
                 <Route
                     path="/communities"
