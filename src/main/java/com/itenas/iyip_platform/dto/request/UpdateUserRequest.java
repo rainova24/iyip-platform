@@ -1,14 +1,13 @@
 package com.itenas.iyip_platform.dto.request;
 
-import com.itenas.iyip_platform.entity.AdminUser;
-import jakarta.validation.constraints.Past;
-import jakarta.validation.constraints.Size;
+import com.itenas.iyip_platform.entity.RegularUser;
+import jakarta.validation.constraints.*;
 import lombok.Data;
 
 import java.time.LocalDate;
 
 @Data
-public class UpdateAdminUserRequest {
+public class UpdateUserRequest {
 
     @Size(min = 3, max = 100, message = "Name must be between 3-100 characters")
     private String name;
@@ -23,7 +22,7 @@ public class UpdateAdminUserRequest {
     @Past(message = "Birth date must be in the past")
     private LocalDate birthDate;
 
-    private AdminUser.Gender gender;
+    private RegularUser.Gender gender;
 
     @Size(max = 100, message = "Province must be max 100 characters")
     private String province;

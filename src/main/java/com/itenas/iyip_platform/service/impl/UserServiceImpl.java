@@ -1,10 +1,8 @@
 package com.itenas.iyip_platform.service.impl;
 
 import com.itenas.iyip_platform.dto.request.RegisterRequest;
-import com.itenas.iyip_platform.dto.request.UpdateAdminUserRequest;
-import com.itenas.iyip_platform.dto.request.UpdateRegularUserRequest;
-import com.itenas.iyip_platform.dto.response.RegularUserResponse;
-import com.itenas.iyip_platform.dto.response.AdminUserResponse;
+import com.itenas.iyip_platform.dto.request.UpdateUserRequest;
+import com.itenas.iyip_platform.dto.response.UserResponse;
 import com.itenas.iyip_platform.dto.response.CommunityResponse;
 import com.itenas.iyip_platform.dto.response.EventResponse;
 import com.itenas.iyip_platform.entity.*;
@@ -37,26 +35,26 @@ public class UserServiceImpl implements UserService {
     private final PasswordEncoder passwordEncoder;
 
     @Override
-    public RegularUserResponse findById(Long id) {
+    public UserResponse findById(Long id) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
         return mapToResponse(user);
     }
 
     @Override
-    public RegularUserResponse findByEmail(String email) {
+    public UserResponse findByEmail(String email) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
         return mapToResponse(user);
     }
 
     @Override
-    public Page<RegularUserResponse> findAll(Pageable pageable) {
+    public Page<UserResponse> findAll(Pageable pageable) {
         return userRepository.findAll(pageable).map(this::mapToResponse);
     }
 
     @Override
-    public List<RegularUserResponse> findByUserType(String userType) {
+    public List<UserResponse> findByUserType(String userType) {
         List<User> users;
         if ("ADMIN".equals(userType)) {
             users = adminUserRepository.findAll().stream()
@@ -72,7 +70,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional
-    public RegularUserResponse createUser(RegisterRequest request) {
+    public UserResponse createUser(RegisterRequest request) {
         if (userRepository.existsByEmail(request.getEmail())) {
             throw new IllegalArgumentException("Email already exists");
         }
@@ -98,7 +96,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional
-    public RegularUserResponse updateProfile(Long userId, UpdateRegularUserRequest request) {
+    public UserResponse updateProfile(Long userId, UpdateUserRequest request) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
@@ -128,51 +126,23 @@ public class UserServiceImpl implements UserService {
             if (request.getCity() != null) {
                 regularUser.setCity(request.getCity());
             }
-        }
-        User updated = userRepository.save(user);
-            return mapToResponse(updated);
-    }
-
-    @Override
-    @Transactional
-    public AdminUserResponse updateProfile(Long userId, UpdateAdminUserRequest request) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
-
-        // Update common fields
-        if (request.getName() != null) {
-            user.setName(request.getName());
-        }
-        if (request.getPhone() != null) {
-            user.setPhone(request.getPhone());
-        }
-
-        // Update specific fields based on user type
-        if (user instanceof AdminUser) {
+        } else if (user instanceof AdminUser) {
             AdminUser adminUser = (AdminUser) user;
-            if (request.getNim() != null) {
-                adminUser.setNim(request.getNim());
+            if (request.getDepartment() != null) {
+                adminUser.setDepartment(request.getDepartment());
             }
-            if (request.getBirthDate() != null) {
-                adminUser.setBirthDate(request.getBirthDate());
-            }
-            if (request.getGender() != null) {
-                adminUser.setGender(request.getGender());
-            }
-            if (request.getProvince() != null) {
-                adminUser.setProvince(request.getProvince());
-            }
-            if (request.getCity() != null) {
-                adminUser.setCity(request.getCity());
+            if (request.getAccessLevel() != null) {
+                adminUser.setAccessLevel(request.getAccessLevel());
             }
         }
+
         User updated = userRepository.save(user);
         return mapToResponse(updated);
     }
 
     @Override
     @Transactional
-    public RegularUserResponse updateRegularUser(Long userId, UpdateRegularUserRequest request) {
+    public UserResponse updateUser(Long userId, UpdateUserRequest request) {
         return updateProfile(userId, request);
     }
 
@@ -230,8 +200,8 @@ public class UserServiceImpl implements UserService {
                 .collect(Collectors.toList());
     }
 
-    private RegularUserResponse mapToResponse(User user) {
-        RegularUserResponse response = new RegularUserResponse();
+    private UserResponse mapToResponse(User user) {
+        UserResponse response = new UserResponse();
         response.setUserId(user.getUserId());
         response.setName(user.getName());
         response.setEmail(user.getEmail());
@@ -248,6 +218,10 @@ public class UserServiceImpl implements UserService {
                     regularUser.getGender().name() : null);
             response.setProvince(regularUser.getProvince());
             response.setCity(regularUser.getCity());
+        } else if (user instanceof AdminUser) {
+            AdminUser adminUser = (AdminUser) user;
+            response.setDepartment(adminUser.getDepartment());
+            response.setAccessLevel(adminUser.getAccessLevel());
         }
 
         return response;

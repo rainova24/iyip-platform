@@ -8,7 +8,7 @@ import java.time.LocalDateTime;
 
 @Data
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class RegularUserResponse {
+public class UserResponse {
     private Long userId;
     private String name;
     private String email;
