@@ -6,7 +6,7 @@ import com.itenas.iyip_platform.dto.response.CommunityResponse;
 import com.itenas.iyip_platform.dto.response.UserCommunityResponse;
 import com.itenas.iyip_platform.entity.Community;
 import com.itenas.iyip_platform.entity.UserCommunity;
-import com.itenas.iyip_platform.entity.base.User;
+import com.itenas.iyip_platform.entity.User;
 import com.itenas.iyip_platform.exception.ResourceNotFoundException;
 import com.itenas.iyip_platform.repository.CommunityRepository;
 import com.itenas.iyip_platform.repository.UserCommunityRepository;

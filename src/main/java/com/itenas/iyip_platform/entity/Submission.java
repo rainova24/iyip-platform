@@ -1,7 +1,6 @@
 package com.itenas.iyip_platform.entity;
 
 import com.itenas.iyip_platform.entity.base.BaseEntity;
-import com.itenas.iyip_platform.entity.base.User;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -20,9 +19,11 @@ public class Submission extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "submission_id")
     private Long submissionId;
 
-    @ManyToOne
+    // UPDATED: Reference to concrete User class instead of base.User
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
@@ -36,49 +37,54 @@ public class Submission extends BaseEntity {
     @Column(columnDefinition = "TEXT")
     private String content;
 
-    @Column(columnDefinition = "TEXT")
+    @Column(name = "file_url", columnDefinition = "TEXT")
     private String fileUrl;
 
-    @Column(nullable = false)
+    @Column(name = "submitted_at", nullable = false)
     private LocalDateTime submittedAt;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private SubmissionStatus status = SubmissionStatus.PENDING;
 
+    @PrePersist
+    protected void onCreate() {
+        if (submittedAt == null) {
+            submittedAt = LocalDateTime.now();
+        }
+        if (status == null) {
+            status = SubmissionStatus.PENDING;
+        }
+    }
+
     public enum SubmissionType {
-        MATERIAL("material"),
-        FASILITAS("fasilitas");
+        MATERIAL("Material"),
+        FASILITAS("Fasilitas");
 
-        private final String value;
+        private final String displayName;
 
-        SubmissionType(String value) {
-            this.value = value;
+        SubmissionType(String displayName) {
+            this.displayName = displayName;
         }
 
-        public String getValue() {
-            return value;
+        public String getDisplayName() {
+            return displayName;
         }
     }
 
     public enum SubmissionStatus {
-        PENDING("pending"),
-        APPROVED("approved"),
-        REJECTED("rejected");
+        PENDING("Pending"),
+        APPROVED("Approved"),
+        REJECTED("Rejected");
 
-        private final String value;
+        private final String displayName;
 
-        SubmissionStatus(String value) {
-            this.value = value;
+        SubmissionStatus(String displayName) {
+            this.displayName = displayName;
         }
 
-        public String getValue() {
-            return value;
+        public String getDisplayName() {
+            return displayName;
         }
-    }
-
-    @PrePersist
-    protected void onCreate() {
-        submittedAt = LocalDateTime.now();
     }
 }

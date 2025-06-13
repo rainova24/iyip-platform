@@ -1,7 +1,6 @@
 package com.itenas.iyip_platform.entity;
 
 import com.itenas.iyip_platform.entity.base.BaseEntity;
-import com.itenas.iyip_platform.entity.base.User;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -20,6 +19,7 @@ public class UserCommunity extends BaseEntity {
     @Column(name = "user_community_id")
     private Long userCommunityId;
 
+    // UPDATED: Reference to concrete User class instead of base.User
     @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)
     private User user;

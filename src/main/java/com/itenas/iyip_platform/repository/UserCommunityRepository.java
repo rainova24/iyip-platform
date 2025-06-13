@@ -1,7 +1,7 @@
 package com.itenas.iyip_platform.repository;
 
 import com.itenas.iyip_platform.entity.Community;
-import com.itenas.iyip_platform.entity.base.User;
+import com.itenas.iyip_platform.entity.User;
 import com.itenas.iyip_platform.entity.UserCommunity;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;

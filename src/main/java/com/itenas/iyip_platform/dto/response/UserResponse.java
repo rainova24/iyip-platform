@@ -13,20 +13,18 @@ public class UserResponse {
     private String name;
     private String email;
     private String phone;
-    private String userType;
+    private String userType; // Role name (ADMIN or USER)
 
-    // RegularUser fields
+    // User profile fields (sesuai TRD)
     private String nim;
     private LocalDate birthDate;
     private String gender;
     private String province;
     private String city;
 
-    // AdminUser fields
-    private String department;
-    private Integer accessLevel;
-
     // Metadata
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+
+    // Removed: department and accessLevel (tidak ada di TRD)
 }

@@ -59,23 +59,32 @@ public class DataInitializer implements CommandLineRunner {
             Role userRole = roleRepository.findByName("USER").orElse(null);
 
             if (adminRole != null) {
-                AdminUser adminUser = new AdminUser();
+                // Create admin user
+                User adminUser = new User();
                 adminUser.setName("Admin User");
                 adminUser.setNim("ADMIN001");
                 adminUser.setEmail("admin@iyip.com");
                 adminUser.setPassword(passwordEncoder.encode("admin123"));
                 adminUser.setRole(adminRole);
                 userRepository.save(adminUser);
+                log.info("Admin user created: {}", adminUser.getEmail());
             }
 
             if (userRole != null) {
-                RegularUser regularUser = new RegularUser();
+                // Create regular user
+                User regularUser = new User();
                 regularUser.setName("Regular User");
                 regularUser.setNim("USER001");
                 regularUser.setEmail("user@iyip.com");
                 regularUser.setPassword(passwordEncoder.encode("user123"));
+                regularUser.setBirthDate(LocalDate.of(1990, 1, 1));
+                regularUser.setGender(User.Gender.LAKI_LAKI);
+                regularUser.setPhone("081234567890");
+                regularUser.setProvince("Jawa Barat");
+                regularUser.setCity("Bandung");
                 regularUser.setRole(userRole);
                 userRepository.save(regularUser);
+                log.info("Regular user created: {}", regularUser.getEmail());
             }
 
             log.info("Default users created successfully");
@@ -84,52 +93,43 @@ public class DataInitializer implements CommandLineRunner {
 
     private void initializeCommunities() {
         if (communityRepository.count() == 0) {
-            log.info("Creating sample communities...");
+            log.info("Creating default communities...");
 
-            String[][] communities = {
-                    {"Technology Enthusiasts", "Community for technology lovers and professionals"},
-                    {"Academic Research", "Community focused on academic research and publications"},
-                    {"Student Organizations", "Community for various student organizations"},
-                    {"Creative Arts", "Community for artists, designers, and creative professionals"}
-            };
+            Community techCommunity = new Community();
+            techCommunity.setName("Technology Community");
+            techCommunity.setDescription("Community for technology enthusiasts");
+            communityRepository.save(techCommunity);
 
-            for (String[] communityData : communities) {
-                Community community = new Community();
-                community.setName(communityData[0]);
-                community.setDescription(communityData[1]);
-                communityRepository.save(community);
-            }
+            Community sportsCommunity = new Community();
+            sportsCommunity.setName("Sports Community");
+            sportsCommunity.setDescription("Community for sports lovers");
+            communityRepository.save(sportsCommunity);
 
-            log.info("Sample communities created successfully");
+            log.info("Default communities created successfully");
         }
     }
 
     private void initializeEvents() {
         if (eventRepository.count() == 0) {
-            log.info("Creating sample events...");
+            log.info("Creating default events...");
 
-            Object[][] events = {
-                    {"Tech Innovation Summit 2025", "Annual technology innovation summit featuring latest trends and technologies",
-                            LocalDate.of(2025, 8, 15), LocalDate.of(2025, 8, 17), LocalDate.of(2025, 8, 1)},
-                    {"Academic Research Conference", "International conference on academic research methodologies",
-                            LocalDate.of(2025, 9, 10), LocalDate.of(2025, 9, 12), LocalDate.of(2025, 8, 25)},
-                    {"Creative Arts Workshop", "Workshop series on various creative arts techniques",
-                            LocalDate.of(2025, 7, 20), LocalDate.of(2025, 7, 22), LocalDate.of(2025, 7, 10)},
-                    {"Student Leadership Forum", "Forum for developing student leadership skills",
-                            LocalDate.of(2025, 10, 5), LocalDate.of(2025, 10, 6), LocalDate.of(2025, 9, 20)}
-            };
+            Event techEvent = new Event();
+            techEvent.setTitle("Tech Conference 2024");
+            techEvent.setDescription("Annual technology conference");
+            techEvent.setStartDate(LocalDate.now().plusDays(30));
+            techEvent.setEndDate(LocalDate.now().plusDays(32));
+            techEvent.setRegistrationDeadline(LocalDate.now().plusDays(15));
+            eventRepository.save(techEvent);
 
-            for (Object[] eventData : events) {
-                Event event = new Event();
-                event.setTitle((String) eventData[0]);
-                event.setDescription((String) eventData[1]);
-                event.setStartDate((LocalDate) eventData[2]);
-                event.setEndDate((LocalDate) eventData[3]);
-                event.setRegistrationDeadline((LocalDate) eventData[4]);
-                eventRepository.save(event);
-            }
+            Event sportsEvent = new Event();
+            sportsEvent.setTitle("Sports Festival 2024");
+            sportsEvent.setDescription("Annual sports festival");
+            sportsEvent.setStartDate(LocalDate.now().plusDays(45));
+            sportsEvent.setEndDate(LocalDate.now().plusDays(47));
+            sportsEvent.setRegistrationDeadline(LocalDate.now().plusDays(30));
+            eventRepository.save(sportsEvent);
 
-            log.info("Sample events created successfully");
+            log.info("Default events created successfully");
         }
     }
 }

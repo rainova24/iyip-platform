@@ -1,7 +1,6 @@
 package com.itenas.iyip_platform.entity;
 
 import com.itenas.iyip_platform.entity.base.BaseEntity;
-import com.itenas.iyip_platform.entity.base.User;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -23,6 +22,7 @@ public class Journal extends BaseEntity {
     @Column(name = "journal_id")
     private Long journalId;
 
+    // UPDATED: Reference to concrete User class instead of base.User
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;

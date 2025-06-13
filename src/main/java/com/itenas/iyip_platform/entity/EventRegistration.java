@@ -1,7 +1,6 @@
 package com.itenas.iyip_platform.entity;
 
 import com.itenas.iyip_platform.entity.base.BaseEntity;
-import com.itenas.iyip_platform.entity.base.User;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -20,9 +19,9 @@ public class EventRegistration extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "event_registration_id")
     private Long eventRegistrationId;
 
+    // UPDATED: Reference to concrete User class instead of base.User
     @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)
     private User user;

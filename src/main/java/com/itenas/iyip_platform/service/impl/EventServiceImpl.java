@@ -6,7 +6,7 @@ import com.itenas.iyip_platform.dto.response.EventResponse;
 import com.itenas.iyip_platform.dto.response.EventRegistrationResponse;
 import com.itenas.iyip_platform.entity.Event;
 import com.itenas.iyip_platform.entity.EventRegistration;
-import com.itenas.iyip_platform.entity.base.User;
+import com.itenas.iyip_platform.entity.User;
 import com.itenas.iyip_platform.exception.ResourceNotFoundException;
 import com.itenas.iyip_platform.repository.EventRepository;
 import com.itenas.iyip_platform.repository.EventRegistrationRepository;

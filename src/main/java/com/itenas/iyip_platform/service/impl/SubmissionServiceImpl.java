@@ -4,7 +4,7 @@ import com.itenas.iyip_platform.dto.request.CreateSubmissionRequest;
 import com.itenas.iyip_platform.dto.request.UpdateSubmissionRequest;
 import com.itenas.iyip_platform.dto.response.SubmissionResponse;
 import com.itenas.iyip_platform.entity.Submission;
-import com.itenas.iyip_platform.entity.base.User;
+import com.itenas.iyip_platform.entity.User;
 import com.itenas.iyip_platform.exception.ResourceNotFoundException;
 import com.itenas.iyip_platform.repository.SubmissionRepository;
 import com.itenas.iyip_platform.repository.UserRepository;

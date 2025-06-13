@@ -4,7 +4,7 @@ import com.itenas.iyip_platform.dto.request.CreateJournalRequest;
 import com.itenas.iyip_platform.dto.request.UpdateJournalRequest;
 import com.itenas.iyip_platform.dto.response.JournalResponse;
 import com.itenas.iyip_platform.entity.Journal;
-import com.itenas.iyip_platform.entity.base.User;
+import com.itenas.iyip_platform.entity.User;
 import com.itenas.iyip_platform.exception.ResourceNotFoundException;
 import com.itenas.iyip_platform.repository.JournalRepository;
 import com.itenas.iyip_platform.repository.UserRepository;
