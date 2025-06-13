@@ -1,17 +1,22 @@
 package com.itenas.iyip_platform.service;
 
-import com.itenas.iyip_platform.dto.EventDto;
+import com.itenas.iyip_platform.dto.request.CreateEventRequest;
+import com.itenas.iyip_platform.dto.request.UpdateEventRequest;
+import com.itenas.iyip_platform.dto.response.EventResponse;
+import com.itenas.iyip_platform.dto.response.EventRegistrationResponse;
 
 import java.util.List;
 
 public interface EventService {
-    EventDto findById(Long id);
-    List<EventDto> findAll();
-    List<EventDto> findUpcomingEvents();
-    List<EventDto> findEventsByUserId(Long userId);
-    EventDto save(EventDto eventDto);
+    EventResponse findById(Long id);
+    List<EventResponse> findAll();
+    List<EventResponse> findUpcomingEvents();
+    List<EventResponse> findEventsByUserId(Long userId);
+    EventResponse create(CreateEventRequest request);
+    EventResponse update(Long id, UpdateEventRequest request);
     void deleteById(Long id);
-    void registerUserForEvent(Long eventId, Long userId);
-    void unregisterUserFromEvent(Long eventId, Long userId);
+    void registerUser(Long eventId, Long userId);
+    void unregisterUser(Long eventId, Long userId);
     boolean isUserRegistered(Long eventId, Long userId);
+    List<EventRegistrationResponse> getEventRegistrations(Long eventId);
 }

@@ -1,109 +1,91 @@
 package com.itenas.iyip_platform.controller;
 
-import com.itenas.iyip_platform.dto.CommunityDto;
+import com.itenas.iyip_platform.dto.request.CreateCommunityRequest;
+import com.itenas.iyip_platform.dto.request.UpdateCommunityRequest;
+import com.itenas.iyip_platform.dto.response.CommunityResponse;
+import com.itenas.iyip_platform.dto.response.ApiResponse;
+import com.itenas.iyip_platform.security.UserDetailsImpl;
 import com.itenas.iyip_platform.service.CommunityService;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.HashMap;
+import jakarta.validation.Valid;
 import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/communities")
 @RequiredArgsConstructor
 @Slf4j
-@CrossOrigin(origins = {"http://localhost:3000", "http://localhost:3001"})
 public class CommunityController {
 
     private final CommunityService communityService;
 
-    // TEST ENDPOINT - Untuk memastikan controller terdeteksi
-    @GetMapping("/test")
-    public ResponseEntity<?> testEndpoint() {
-        log.info("=== TEST ENDPOINT CALLED ===");
-        Map<String, Object> response = new HashMap<>();
-        response.put("message", "Community Controller is working!");
-        response.put("timestamp", java.time.LocalDateTime.now().toString());
-        response.put("status", "SUCCESS");
-        return ResponseEntity.ok(response);
-    }
-
-    // GET /api/communities - Get all communities (PUBLIC ACCESS)
     @GetMapping
     public ResponseEntity<?> getAllCommunities() {
         try {
-            log.info("=== GET ALL COMMUNITIES CALLED ===");
-
-            List<CommunityDto> communities = communityService.findAll();
-            log.info("Found {} communities", communities.size());
-
-            Map<String, Object> response = new HashMap<>();
-            response.put("data", communities);
-            response.put("count", communities.size());
-            response.put("status", "success");
-
-            return ResponseEntity.ok(response);
-
+            List<CommunityResponse> communities = communityService.findAll();
+            return ResponseEntity.ok(ApiResponse.success("Communities retrieved", communities));
         } catch (Exception e) {
-            log.error("=== ERROR in getAllCommunities ===", e);
-
-            Map<String, Object> error = new HashMap<>();
-            error.put("message", "Failed to get communities: " + e.getMessage());
-            error.put("type", e.getClass().getSimpleName());
-            error.put("status", "error");
-
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
+            log.error("Error getting communities", e);
+            return ResponseEntity.badRequest()
+                    .body(ApiResponse.error("Failed to get communities"));
         }
     }
 
-    // GET /api/communities/{id} - Get community by ID
     @GetMapping("/{id}")
     public ResponseEntity<?> getCommunityById(@PathVariable Long id) {
         try {
-            log.info("Getting community with id: {}", id);
-            CommunityDto community = communityService.findById(id);
-
-            Map<String, Object> response = new HashMap<>();
-            response.put("data", community);
-            response.put("status", "success");
-
-            return ResponseEntity.ok(response);
+            CommunityResponse community = communityService.findById(id);
+            return ResponseEntity.ok(ApiResponse.success("Community retrieved", community));
         } catch (Exception e) {
-            log.error("Error getting community with id: {}", id, e);
-
-            Map<String, Object> error = new HashMap<>();
-            error.put("message", "Community not found");
-            error.put("status", "error");
-
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
+            return ResponseEntity.badRequest()
+                    .body(ApiResponse.error("Community not found"));
         }
     }
 
-    // POST /api/communities - Create new community
     @PostMapping
-    public ResponseEntity<?> createCommunity(@RequestBody CommunityDto communityDto) {
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<?> createCommunity(@Valid @RequestBody CreateCommunityRequest request) {
         try {
-            log.info("Creating community: {}", communityDto.getName());
-            CommunityDto savedCommunity = communityService.save(communityDto);
-
-            Map<String, Object> response = new HashMap<>();
-            response.put("data", savedCommunity);
-            response.put("message", "Community created successfully");
-            response.put("status", "success");
-
-            return ResponseEntity.status(HttpStatus.CREATED).body(response);
+            CommunityResponse community = communityService.create(request);
+            return ResponseEntity.status(HttpStatus.CREATED)
+                    .body(ApiResponse.success("Community created", community));
         } catch (Exception e) {
-            log.error("Error creating community", e);
+            return ResponseEntity.badRequest()
+                    .body(ApiResponse.error("Failed to create community"));
+        }
+    }
 
-            Map<String, Object> error = new HashMap<>();
-            error.put("message", "Failed to create community: " + e.getMessage());
-            error.put("status", "error");
+    @PostMapping("/{id}/join")
+    public ResponseEntity<?> joinCommunity(
+            @PathVariable Long id,
+            @AuthenticationPrincipal UserDetailsImpl userDetails) {
+        try {
+            communityService.joinCommunity(id, userDetails.getId());
+            return ResponseEntity.ok(ApiResponse.success("Joined community", null));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest()
+                    .body(ApiResponse.error("Failed to join community"));
+        }
+    }
 
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
+    @DeleteMapping("/{id}/leave")
+    public ResponseEntity<?> leaveCommunity(
+            @PathVariable Long id,
+            @AuthenticationPrincipal UserDetailsImpl userDetails) {
+        try {
+            communityService.leaveCommunity(id, userDetails.getId());
+            return ResponseEntity.ok(ApiResponse.success("Left community", null));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest()
+                    .body(ApiResponse.error("Failed to leave community"));
         }
     }
 }

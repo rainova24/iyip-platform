@@ -1,106 +1,130 @@
 package com.itenas.iyip_platform.service.impl;
 
-import com.itenas.iyip_platform.dto.JournalDto;
+import com.itenas.iyip_platform.dto.request.CreateJournalRequest;
+import com.itenas.iyip_platform.dto.request.UpdateJournalRequest;
+import com.itenas.iyip_platform.dto.response.JournalResponse;
+import com.itenas.iyip_platform.entity.Journal;
+import com.itenas.iyip_platform.entity.base.User;
 import com.itenas.iyip_platform.exception.ResourceNotFoundException;
-import com.itenas.iyip_platform.model.entity.Journal;
-import com.itenas.iyip_platform.model.entity.User;
 import com.itenas.iyip_platform.repository.JournalRepository;
 import com.itenas.iyip_platform.repository.UserRepository;
 import com.itenas.iyip_platform.service.JournalService;
+
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class JournalServiceImpl implements JournalService {
 
     private final JournalRepository journalRepository;
     private final UserRepository userRepository;
 
     @Override
-    public JournalDto findById(Long id) {
+    public JournalResponse findById(Long id) {
         Journal journal = journalRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Journal not found with id: " + id));
-        return mapToDto(journal);
+                .orElseThrow(() -> new ResourceNotFoundException("Journal not found"));
+        return mapToResponse(journal);
     }
 
     @Override
-    public List<JournalDto> findAll() {
+    public List<JournalResponse> findAll() {
         return journalRepository.findAll().stream()
-                .map(this::mapToDto)
+                .map(this::mapToResponse)
                 .collect(Collectors.toList());
     }
 
     @Override
-    public List<JournalDto> findByUserId(Long userId) {
-        return journalRepository.findByUserUserIdOrderByCreatedAtDesc(userId).stream()
-                .map(this::mapToDto)
-                .collect(Collectors.toList());
-    }
-
-    @Override
-    public List<JournalDto> findPublicJournals() {
+    public List<JournalResponse> findPublicJournals() {
         return journalRepository.findByIsPublicTrueOrderByCreatedAtDesc().stream()
-                .map(this::mapToDto)
+                .map(this::mapToResponse)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<JournalResponse> findByUserId(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        return journalRepository.findByUserOrderByCreatedAtDesc(user).stream()
+                .map(this::mapToResponse)
                 .collect(Collectors.toList());
     }
 
     @Override
     @Transactional
-    public JournalDto save(JournalDto journalDto) {
-        Journal journal;
-        if (journalDto.getJournalId() != null) {
-            journal = journalRepository.findById(journalDto.getJournalId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Journal not found with id: " + journalDto.getJournalId()));
-        } else {
-            journal = new Journal();
-            journal.setCreatedAt(LocalDateTime.now());
+    public JournalResponse create(Long userId, CreateJournalRequest request) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        Journal journal = new Journal();
+        journal.setUser(user);
+        journal.setTitle(request.getTitle());
+        journal.setContent(request.getContent());
+        journal.setThumbnailUrl(request.getThumbnailUrl());
+        journal.setIsPublic(request.getIsPublic() != null ? request.getIsPublic() : false);
+
+        Journal saved = journalRepository.save(journal);
+        return mapToResponse(saved);
+    }
+
+    @Override
+    @Transactional
+    public JournalResponse update(Long id, UpdateJournalRequest request) {
+        Journal journal = journalRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Journal not found"));
+
+        if (request.getTitle() != null) {
+            journal.setTitle(request.getTitle());
+        }
+        if (request.getContent() != null) {
+            journal.setContent(request.getContent());
+        }
+        if (request.getThumbnailUrl() != null) {
+            journal.setThumbnailUrl(request.getThumbnailUrl());
+        }
+        if (request.getIsPublic() != null) {
+            journal.setIsPublic(request.getIsPublic());
         }
 
-        User user = userRepository.findById(journalDto.getUserId())
-                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + journalDto.getUserId()));
-
-        journal.setUser(user);
-        journal.setTitle(journalDto.getTitle());
-        journal.setContent(journalDto.getContent());
-        journal.setThumbnailUrl(journalDto.getThumbnailUrl());
-        journal.setIsPublic(journalDto.getIsPublic());
-
-        Journal savedJournal = journalRepository.save(journal);
-        return mapToDto(savedJournal);
+        Journal updated = journalRepository.save(journal);
+        return mapToResponse(updated);
     }
 
     @Override
     @Transactional
     public void deleteById(Long id) {
         if (!journalRepository.existsById(id)) {
-            throw new ResourceNotFoundException("Journal not found with id: " + id);
+            throw new ResourceNotFoundException("Journal not found");
         }
         journalRepository.deleteById(id);
     }
 
     @Override
-    public List<JournalDto> searchJournals(String keyword) {
-        return journalRepository.findByTitleContainingIgnoreCaseOrContentContainingIgnoreCase(keyword, keyword).stream()
-                .map(this::mapToDto)
-                .collect(Collectors.toList());
+    public boolean isOwner(Long journalId, Long userId) {
+        Journal journal = journalRepository.findById(journalId)
+                .orElseThrow(() -> new ResourceNotFoundException("Journal not found"));
+        return journal.getUser().getUserId().equals(userId);
     }
 
-    private JournalDto mapToDto(Journal journal) {
-        JournalDto dto = new JournalDto();
-        dto.setJournalId(journal.getJournalId());
-        dto.setUserId(journal.getUser().getUserId());
-        dto.setUserName(journal.getUser().getName());
-        dto.setTitle(journal.getTitle());
-        dto.setContent(journal.getContent());
-        dto.setThumbnailUrl(journal.getThumbnailUrl());
-        dto.setIsPublic(journal.getIsPublic());
-        dto.setCreatedAt(journal.getCreatedAt());
-        return dto;
+    private JournalResponse mapToResponse(Journal journal) {
+        JournalResponse response = new JournalResponse();
+        response.setJournalId(journal.getJournalId());
+        response.setUserId(journal.getUser().getUserId());
+        response.setUserName(journal.getUser().getName());
+        response.setTitle(journal.getTitle());
+        response.setContent(journal.getContent());
+        response.setThumbnailUrl(journal.getThumbnailUrl());
+        response.setIsPublic(journal.getIsPublic());
+        response.setCreatedAt(journal.getCreatedAt());
+        response.setUpdatedAt(journal.getUpdatedAt());
+        return response;
     }
 }

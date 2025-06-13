@@ -1,16 +1,26 @@
 package com.itenas.iyip_platform.service;
 
+import com.itenas.iyip_platform.dto.request.RegisterRequest;
+import com.itenas.iyip_platform.dto.request.UpdateUserRequest;
+import com.itenas.iyip_platform.dto.response.UserResponse;
+import com.itenas.iyip_platform.dto.response.CommunityResponse;
+import com.itenas.iyip_platform.dto.response.EventResponse;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
 import java.util.List;
 
-import com.itenas.iyip_platform.dto.UserDto;
-import com.itenas.iyip_platform.model.entity.User;
-
 public interface UserService {
-    UserDto findById(Long id);
-    List<UserDto> findAll();
-    UserDto save(UserDto userDto);
+    UserResponse findById(Long id);
+    UserResponse findByEmail(String email);
+    Page<UserResponse> findAll(Pageable pageable);
+    List<UserResponse> findByUserType(String userType);
+    UserResponse createUser(RegisterRequest request);
+    UserResponse updateProfile(Long userId, UpdateUserRequest request);
+    UserResponse updateUser(Long userId, UpdateUserRequest request);
     void deleteById(Long id);
-    UserDto findByEmail(String email);
-    User getUserByEmail(String email);
-    UserDto updateProfile(String email, UserDto userDto);
+    boolean existsByEmail(String email);
+    List<CommunityResponse> getUserCommunities(Long userId);
+    List<EventResponse> getUserEvents(Long userId);
 }

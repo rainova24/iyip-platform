@@ -1,6 +1,6 @@
 package com.itenas.iyip_platform.security;
 
-import com.itenas.iyip_platform.model.entity.User;
+import com.itenas.iyip_platform.entity.base.User;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import org.springframework.security.core.GrantedAuthority;
@@ -21,7 +21,7 @@ public class UserDetailsImpl implements UserDetails {
     private Collection<? extends GrantedAuthority> authorities;
 
     public static UserDetailsImpl build(User user) {
-        GrantedAuthority authority = new SimpleGrantedAuthority("ROLE_" + user.getRole().getName());
+        GrantedAuthority authority = new SimpleGrantedAuthority("ROLE_" + user.getRole());
 
         return new UserDetailsImpl(
                 user.getUserId(),
@@ -30,16 +30,6 @@ public class UserDetailsImpl implements UserDetails {
                 user.getPassword(),
                 Collections.singletonList(authority)
         );
-    }
-
-    @Override
-    public Collection<? extends GrantedAuthority> getAuthorities() {
-        return authorities;
-    }
-
-    @Override
-    public String getPassword() {
-        return password;
     }
 
     @Override

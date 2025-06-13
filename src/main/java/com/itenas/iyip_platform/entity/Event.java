@@ -1,5 +1,6 @@
-package com.itenas.iyip_platform.model.entity;
+package com.itenas.iyip_platform.entity;
 
+import com.itenas.iyip_platform.entity.base.BaseEntity;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -20,6 +21,7 @@ public class Event extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "event_id")
     private Long eventId;
 
     @Column(nullable = false, length = 150)

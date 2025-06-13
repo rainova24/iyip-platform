@@ -1,7 +1,7 @@
 package com.itenas.iyip_platform.repository;
 
-import com.itenas.iyip_platform.model.entity.Journal;
-import com.itenas.iyip_platform.model.entity.User;
+import com.itenas.iyip_platform.entity.Journal;
+import com.itenas.iyip_platform.entity.base.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -13,4 +13,5 @@ public interface JournalRepository extends JpaRepository<Journal, Long> {
     List<Journal> findByUserUserIdOrderByCreatedAtDesc(Long userId);
     List<Journal> findByIsPublicTrueOrderByCreatedAtDesc();
     List<Journal> findByTitleContainingIgnoreCaseOrContentContainingIgnoreCase(String title, String content);
+    List<Journal> findByIsPublicTrue();
 }

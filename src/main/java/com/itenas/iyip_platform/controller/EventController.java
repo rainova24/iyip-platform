@@ -1,76 +1,104 @@
 package com.itenas.iyip_platform.controller;
 
-import com.itenas.iyip_platform.dto.EventDto;
+import com.itenas.iyip_platform.dto.request.CreateEventRequest;
+import com.itenas.iyip_platform.dto.request.UpdateEventRequest;
+import com.itenas.iyip_platform.dto.response.EventResponse;
+import com.itenas.iyip_platform.dto.response.ApiResponse;
 import com.itenas.iyip_platform.security.UserDetailsImpl;
 import com.itenas.iyip_platform.service.EventService;
-import jakarta.validation.Valid;
+
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import jakarta.validation.Valid;
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/events")
 @RequiredArgsConstructor
+@Slf4j
 public class EventController {
 
     private final EventService eventService;
 
     @GetMapping
-    public ResponseEntity<List<EventDto>> getAllEvents() {
-        return ResponseEntity.ok(eventService.findAll());
+    public ResponseEntity<?> getAllEvents() {
+        try {
+            List<EventResponse> events = eventService.findAll();
+            return ResponseEntity.ok(ApiResponse.success("Events retrieved", events));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest()
+                    .body(ApiResponse.error("Failed to get events: " + e.getMessage()));
+        }
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<EventDto> getEventById(@PathVariable Long id) {
-        return ResponseEntity.ok(eventService.findById(id));
+    public ResponseEntity<?> getEventById(@PathVariable Long id) {
+        try {
+            EventResponse event = eventService.findById(id);
+            return ResponseEntity.ok(ApiResponse.success("Event retrieved", event));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest()
+                    .body(ApiResponse.error("Event not found"));
+        }
     }
 
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<EventDto> createEvent(@Valid @RequestBody EventDto eventDto) {
-        return new ResponseEntity<>(eventService.save(eventDto), HttpStatus.CREATED);
+    public ResponseEntity<?> createEvent(@Valid @RequestBody CreateEventRequest request) {
+        try {
+            EventResponse event = eventService.create(request);
+            return ResponseEntity.status(HttpStatus.CREATED)
+                    .body(ApiResponse.success("Event created", event));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest()
+                    .body(ApiResponse.error("Failed to create event: " + e.getMessage()));
+        }
     }
 
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<EventDto> updateEvent(
+    public ResponseEntity<?> updateEvent(
             @PathVariable Long id,
-            @Valid @RequestBody EventDto eventDto) {
-        eventDto.setEventId(id);
-        return ResponseEntity.ok(eventService.save(eventDto));
-    }
-
-    @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Void> deleteEvent(@PathVariable Long id) {
-        eventService.deleteById(id);
-        return ResponseEntity.noContent().build();
+            @Valid @RequestBody UpdateEventRequest request) {
+        try {
+            EventResponse event = eventService.update(id, request);
+            return ResponseEntity.ok(ApiResponse.success("Event updated", event));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest()
+                    .body(ApiResponse.error("Failed to update event: " + e.getMessage()));
+        }
     }
 
     @PostMapping("/{id}/register")
-    public ResponseEntity<Void> registerForEvent(
+    public ResponseEntity<?> registerForEvent(
             @PathVariable Long id,
             @AuthenticationPrincipal UserDetailsImpl userDetails) {
-        eventService.registerUserForEvent(id, userDetails.getId());
-        return ResponseEntity.ok().build();
+        try {
+            eventService.registerUser(id, userDetails.getId());
+            return ResponseEntity.ok(ApiResponse.success("Registered for event", null));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest()
+                    .body(ApiResponse.error("Failed to register: " + e.getMessage()));
+        }
     }
 
-    @DeleteMapping("/{id}/unregister")
-    public ResponseEntity<Void> unregisterFromEvent(
+    @DeleteMapping("/{id}/register")
+    public ResponseEntity<?> unregisterFromEvent(
             @PathVariable Long id,
             @AuthenticationPrincipal UserDetailsImpl userDetails) {
-        eventService.unregisterUserFromEvent(id, userDetails.getId());
-        return ResponseEntity.noContent().build();
-    }
-
-    @GetMapping("/my-events")
-    public ResponseEntity<List<EventDto>> getUserEvents(
-            @AuthenticationPrincipal UserDetailsImpl userDetails) {
-        return ResponseEntity.ok(eventService.findEventsByUserId(userDetails.getId()));
+        try {
+            eventService.unregisterUser(id, userDetails.getId());
+            return ResponseEntity.ok(ApiResponse.success("Unregistered from event", null));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest()
+                    .body(ApiResponse.error("Failed to unregister: " + e.getMessage()));
+        }
     }
 }

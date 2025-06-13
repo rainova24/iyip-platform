@@ -1,16 +1,21 @@
 package com.itenas.iyip_platform.service.impl;
 
-import com.itenas.iyip_platform.dto.CommunityDto;
+import com.itenas.iyip_platform.dto.request.CreateCommunityRequest;
+import com.itenas.iyip_platform.dto.request.UpdateCommunityRequest;
+import com.itenas.iyip_platform.dto.response.CommunityResponse;
+import com.itenas.iyip_platform.dto.response.UserCommunityResponse;
+import com.itenas.iyip_platform.entity.Community;
+import com.itenas.iyip_platform.entity.UserCommunity;
+import com.itenas.iyip_platform.entity.base.User;
 import com.itenas.iyip_platform.exception.ResourceNotFoundException;
-import com.itenas.iyip_platform.model.entity.Community;
-import com.itenas.iyip_platform.model.entity.User;
-import com.itenas.iyip_platform.model.entity.UserCommunity;
 import com.itenas.iyip_platform.repository.CommunityRepository;
 import com.itenas.iyip_platform.repository.UserCommunityRepository;
 import com.itenas.iyip_platform.repository.UserRepository;
 import com.itenas.iyip_platform.service.CommunityService;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,220 +28,136 @@ import java.util.stream.Collectors;
 public class CommunityServiceImpl implements CommunityService {
 
     private final CommunityRepository communityRepository;
-    private final UserRepository userRepository;
     private final UserCommunityRepository userCommunityRepository;
+    private final UserRepository userRepository;
 
     @Override
-    public CommunityDto findById(Long id) {
-        try {
-            log.info("Finding community by ID: {}", id);
-            Community community = communityRepository.findById(id)
-                    .orElseThrow(() -> new ResourceNotFoundException("Community not found with id: " + id));
-            log.info("Found community: {}", community.getName());
-            return mapToDto(community);
-        } catch (Exception e) {
-            log.error("Error finding community by ID: {}", id, e);
-            throw e;
-        }
+    public CommunityResponse findById(Long id) {
+        Community community = communityRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Community not found"));
+        return mapToResponse(community);
     }
 
     @Override
-    public List<CommunityDto> findAll() {
-        try {
-            log.info("=== DEBUG: CommunityService.findAll() called ===");
-
-            // Step 1: Get all communities from repository
-            log.info("Step 1: Calling communityRepository.findAll()");
-            List<Community> communities = communityRepository.findAll();
-            log.info("Step 2: Repository returned {} communities", communities.size());
-
-            // Step 2: Log each community
-            for (int i = 0; i < communities.size(); i++) {
-                Community community = communities.get(i);
-                log.info("Community {}: ID={}, Name={}, Description={}",
-                        i + 1,
-                        community.getCommunityId(),
-                        community.getName(),
-                        community.getDescription());
-            }
-
-            // Step 3: Map to DTOs
-            log.info("Step 3: Mapping {} communities to DTOs", communities.size());
-            List<CommunityDto> result = communities.stream()
-                    .map(this::mapToDto)
-                    .collect(Collectors.toList());
-
-            log.info("Step 4: Successfully mapped to {} DTOs", result.size());
-            return result;
-
-        } catch (Exception e) {
-            log.error("=== ERROR in CommunityService.findAll() ===", e);
-            log.error("Error type: {}", e.getClass().getSimpleName());
-            log.error("Error message: {}", e.getMessage());
-            throw e;
-        }
+    public List<CommunityResponse> findAll() {
+        return communityRepository.findAll().stream()
+                .map(this::mapToResponse)
+                .collect(Collectors.toList());
     }
 
     @Override
-    public List<CommunityDto> findCommunitiesByUserId(Long userId) {
-        try {
-            log.info("Finding communities for user ID: {}", userId);
+    public List<CommunityResponse> findByUserId(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
-            // Use simpler approach for debugging
-            List<UserCommunity> userCommunities = userCommunityRepository.findByUserOrderByJoinedAtDesc(
-                    userRepository.findById(userId)
-                            .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId))
-            );
-
-            List<CommunityDto> result = userCommunities.stream()
-                    .map(uc -> mapToDto(uc.getCommunity()))
-                    .collect(Collectors.toList());
-
-            log.info("Found {} communities for user {}", result.size(), userId);
-            return result;
-
-        } catch (Exception e) {
-            log.error("Error finding communities for user: {}", userId, e);
-            throw e;
-        }
+        return userCommunityRepository.findByUserOrderByJoinedAtDesc(user).stream()
+                .map(uc -> mapToResponse(uc.getCommunity()))
+                .collect(Collectors.toList());
     }
 
     @Override
     @Transactional
-    public CommunityDto save(CommunityDto communityDto) {
-        try {
-            log.info("Saving community: {}", communityDto.getName());
-            Community community;
+    public CommunityResponse create(CreateCommunityRequest request) {
+        Community community = new Community();
+        community.setName(request.getName());
+        community.setDescription(request.getDescription());
 
-            if (communityDto.getCommunityId() != null) {
-                community = communityRepository.findById(communityDto.getCommunityId())
-                        .orElseThrow(() -> new ResourceNotFoundException("Community not found with id: " + communityDto.getCommunityId()));
-                log.info("Updating existing community with ID: {}", communityDto.getCommunityId());
-            } else {
-                community = new Community();
-                log.info("Creating new community");
-            }
+        Community saved = communityRepository.save(community);
+        return mapToResponse(saved);
+    }
 
-            community.setName(communityDto.getName());
-            community.setDescription(communityDto.getDescription());
+    @Override
+    @Transactional
+    public CommunityResponse update(Long id, UpdateCommunityRequest request) {
+        Community community = communityRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Community not found"));
 
-            Community savedCommunity = communityRepository.save(community);
-            log.info("Community saved with ID: {}", savedCommunity.getCommunityId());
-
-            return mapToDto(savedCommunity);
-        } catch (Exception e) {
-            log.error("Error saving community", e);
-            throw e;
+        if (request.getName() != null) {
+            community.setName(request.getName());
         }
+        if (request.getDescription() != null) {
+            community.setDescription(request.getDescription());
+        }
+
+        Community updated = communityRepository.save(community);
+        return mapToResponse(updated);
     }
 
     @Override
     @Transactional
     public void deleteById(Long id) {
-        try {
-            log.info("Deleting community with ID: {}", id);
-            if (!communityRepository.existsById(id)) {
-                throw new ResourceNotFoundException("Community not found with id: " + id);
-            }
-            communityRepository.deleteById(id);
-            log.info("Community deleted successfully");
-        } catch (Exception e) {
-            log.error("Error deleting community: {}", id, e);
-            throw e;
+        if (!communityRepository.existsById(id)) {
+            throw new ResourceNotFoundException("Community not found");
         }
+        communityRepository.deleteById(id);
     }
 
     @Override
     @Transactional
     public void joinCommunity(Long communityId, Long userId) {
-        try {
-            log.info("User {} joining community {}", userId, communityId);
+        Community community = communityRepository.findById(communityId)
+                .orElseThrow(() -> new ResourceNotFoundException("Community not found"));
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
-            Community community = communityRepository.findById(communityId)
-                    .orElseThrow(() -> new ResourceNotFoundException("Community not found with id: " + communityId));
-            User user = userRepository.findById(userId)
-                    .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
-
-            if (userCommunityRepository.existsByUserAndCommunity(user, community)) {
-                throw new IllegalStateException("User is already a member of this community");
-            }
-
-            UserCommunity userCommunity = new UserCommunity();
-            userCommunity.setUser(user);
-            userCommunity.setCommunity(community);
-            userCommunityRepository.save(userCommunity);
-
-            log.info("User {} successfully joined community {}", userId, communityId);
-        } catch (Exception e) {
-            log.error("Error joining community", e);
-            throw e;
+        if (userCommunityRepository.existsByUserAndCommunity(user, community)) {
+            throw new IllegalStateException("User already member of this community");
         }
+
+        UserCommunity userCommunity = new UserCommunity();
+        userCommunity.setUser(user);
+        userCommunity.setCommunity(community);
+        userCommunityRepository.save(userCommunity);
     }
 
     @Override
     @Transactional
     public void leaveCommunity(Long communityId, Long userId) {
-        try {
-            log.info("User {} leaving community {}", userId, communityId);
+        Community community = communityRepository.findById(communityId)
+                .orElseThrow(() -> new ResourceNotFoundException("Community not found"));
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
-            Community community = communityRepository.findById(communityId)
-                    .orElseThrow(() -> new ResourceNotFoundException("Community not found with id: " + communityId));
-            User user = userRepository.findById(userId)
-                    .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
-
-            if (!userCommunityRepository.existsByUserAndCommunity(user, community)) {
-                throw new IllegalStateException("User is not a member of this community");
-            }
-
-            userCommunityRepository.deleteByUserAndCommunity(user, community);
-            log.info("User {} successfully left community {}", userId, communityId);
-        } catch (Exception e) {
-            log.error("Error leaving community", e);
-            throw e;
-        }
+        userCommunityRepository.deleteByUserAndCommunity(user, community);
     }
 
     @Override
     public boolean isUserMember(Long communityId, Long userId) {
-        try {
-            Community community = communityRepository.findById(communityId)
-                    .orElseThrow(() -> new ResourceNotFoundException("Community not found with id: " + communityId));
-            User user = userRepository.findById(userId)
-                    .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
+        Community community = communityRepository.findById(communityId)
+                .orElseThrow(() -> new ResourceNotFoundException("Community not found"));
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
-            boolean isMember = userCommunityRepository.existsByUserAndCommunity(user, community);
-            log.info("User {} membership in community {}: {}", userId, communityId, isMember);
-            return isMember;
-        } catch (Exception e) {
-            log.error("Error checking membership", e);
-            throw e;
-        }
+        return userCommunityRepository.existsByUserAndCommunity(user, community);
     }
 
-    private CommunityDto mapToDto(Community community) {
-        try {
-            log.debug("Mapping community to DTO: ID={}, Name={}",
-                    community.getCommunityId(), community.getName());
+    @Override
+    public List<UserCommunityResponse> getCommunityMembers(Long communityId) {
+        Community community = communityRepository.findById(communityId)
+                .orElseThrow(() -> new ResourceNotFoundException("Community not found"));
 
-            CommunityDto dto = new CommunityDto();
-            dto.setCommunityId(community.getCommunityId());
-            dto.setName(community.getName());
-            dto.setDescription(community.getDescription());
+        return userCommunityRepository.findByCommunityOrderByJoinedAtDesc(community).stream()
+                .map(uc -> {
+                    UserCommunityResponse response = new UserCommunityResponse();
+                    response.setUserCommunityId(uc.getUserCommunityId());
+                    response.setUserId(uc.getUser().getUserId());
+                    response.setUserName(uc.getUser().getName());
+                    response.setCommunityId(uc.getCommunity().getCommunityId());
+                    response.setCommunityName(uc.getCommunity().getName());
+                    response.setJoinedAt(uc.getJoinedAt());
+                    return response;
+                })
+                .collect(Collectors.toList());
+    }
 
-            // SIMPLIFIED member count - avoid complex query for now
-            try {
-                Integer memberCount = communityRepository.countMembersByCommunityId(community.getCommunityId());
-                dto.setMemberCount(memberCount != null ? memberCount : 0);
-                log.debug("Member count for community {}: {}", community.getCommunityId(), memberCount);
-            } catch (Exception e) {
-                log.warn("Error getting member count for community {}, setting to 0", community.getCommunityId(), e);
-                dto.setMemberCount(0);
-            }
-
-            return dto;
-        } catch (Exception e) {
-            log.error("Error mapping community to DTO", e);
-            throw e;
-        }
+    private CommunityResponse mapToResponse(Community community) {
+        CommunityResponse response = new CommunityResponse();
+        response.setCommunityId(community.getCommunityId());
+        response.setName(community.getName());
+        response.setDescription(community.getDescription());
+        response.setMemberCount(community.getMembers().size());
+        response.setCreatedAt(community.getCreatedAt());
+        response.setUpdatedAt(community.getUpdatedAt());
+        return response;
     }
 }

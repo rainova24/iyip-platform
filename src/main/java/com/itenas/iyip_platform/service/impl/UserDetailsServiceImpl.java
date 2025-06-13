@@ -1,7 +1,8 @@
-package com.itenas.iyip_platform.security;
+package com.itenas.iyip_platform.service.impl;
 
-import com.itenas.iyip_platform.model.entity.User;
+import com.itenas.iyip_platform.entity.base.User;
 import com.itenas.iyip_platform.repository.UserRepository;
+import com.itenas.iyip_platform.security.UserDetailsImpl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;

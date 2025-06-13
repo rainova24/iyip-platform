@@ -1,71 +1,55 @@
-// src/main/java/com/itenas/iyip_platform/controller/AuthController.java
 package com.itenas.iyip_platform.controller;
 
-import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.Map;
-
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-
-import com.itenas.iyip_platform.dto.AuthDto;
-import com.itenas.iyip_platform.dto.UserDto;
-import com.itenas.iyip_platform.model.entity.Role;
-import com.itenas.iyip_platform.model.entity.User;
+import com.itenas.iyip_platform.dto.request.LoginRequest;
+import com.itenas.iyip_platform.dto.request.RegisterRequest;
+import com.itenas.iyip_platform.dto.response.JwtResponse;
+import com.itenas.iyip_platform.dto.response.UserResponse;
+import com.itenas.iyip_platform.dto.response.ApiResponse;
+import com.itenas.iyip_platform.entity.Role;
+import com.itenas.iyip_platform.entity.RegularUser;
+import com.itenas.iyip_platform.entity.AdminUser;
 import com.itenas.iyip_platform.repository.RoleRepository;
 import com.itenas.iyip_platform.repository.UserRepository;
+import com.itenas.iyip_platform.repository.RegularUserRepository;
+import com.itenas.iyip_platform.repository.AdminUserRepository;
 import com.itenas.iyip_platform.security.JwtTokenProvider;
+import com.itenas.iyip_platform.security.UserDetailsImpl;
 import com.itenas.iyip_platform.service.UserService;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.web.bind.annotation.*;
+
+import jakarta.validation.Valid;
+import java.time.LocalDateTime;
+
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
 @Slf4j
-@CrossOrigin(origins = "http://localhost:3000")
+@CrossOrigin(origins = {"http://localhost:3000", "http://localhost:3001"})
 public class AuthController {
 
     private final AuthenticationManager authenticationManager;
-    private final JwtTokenProvider jwtTokenProvider;
     private final UserRepository userRepository;
+    private final RegularUserRepository regularUserRepository;
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
-    private final UserService userService;
+    private final JwtTokenProvider tokenProvider;
 
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody AuthDto.LoginRequest loginRequest) {
+    public ResponseEntity<?> authenticateUser(@Valid @RequestBody LoginRequest loginRequest) {
         try {
-            // Basic validation
-            if (loginRequest.getEmail() == null || loginRequest.getEmail().trim().isEmpty()) {
-                Map<String, String> error = new HashMap<>();
-                error.put("message", "Email is required");
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
-            }
-
-            if (loginRequest.getPassword() == null || loginRequest.getPassword().trim().isEmpty()) {
-                Map<String, String> error = new HashMap<>();
-                error.put("message", "Password is required");
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
-            }
-
             log.info("Login attempt for email: {}", loginRequest.getEmail());
 
-            // Authenticate user
             Authentication authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(
                             loginRequest.getEmail(),
@@ -74,178 +58,87 @@ public class AuthController {
             );
 
             SecurityContextHolder.getContext().setAuthentication(authentication);
+            String jwt = tokenProvider.generateToken(authentication);
 
-            // Generate JWT token
-            String token = jwtTokenProvider.generateToken(authentication);
+            UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
 
-            // Get user details
-            User user = userRepository.findByEmail(loginRequest.getEmail())
-                    .orElseThrow(() -> new RuntimeException("User not found"));
-
-            // Create response
-            AuthDto.LoginResponse response = AuthDto.LoginResponse.builder()
-                    .token(token)
-                    .user(mapToUserDto(user))
-                    .message("Login successful")
-                    .build();
+            JwtResponse response = new JwtResponse(
+                    jwt,
+                    userDetails.getId(),
+                    userDetails.getEmail(),
+                    userDetails.getName(),
+                    userDetails.getAuthorities().iterator().next().getAuthority()
+            );
 
             log.info("User {} logged in successfully", loginRequest.getEmail());
             return ResponseEntity.ok(response);
 
         } catch (Exception e) {
             log.error("Login failed for email: {}", loginRequest.getEmail(), e);
-            Map<String, String> error = new HashMap<>();
-            error.put("message", "Invalid email or password");
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.error("Invalid email or password"));
         }
     }
 
     @PostMapping("/register")
-    public ResponseEntity<?> register(@RequestBody AuthDto.RegisterRequest registerRequest) {
+    public ResponseEntity<?> registerUser(@Valid @RequestBody RegisterRequest registerRequest) {
         try {
-            // Basic validation
-            if (registerRequest.getName() == null || registerRequest.getName().trim().isEmpty()) {
-                Map<String, String> error = new HashMap<>();
-                error.put("message", "Name is required");
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
-            }
-
-            if (registerRequest.getEmail() == null || registerRequest.getEmail().trim().isEmpty()) {
-                Map<String, String> error = new HashMap<>();
-                error.put("message", "Email is required");
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
-            }
-
-            if (registerRequest.getPassword() == null || registerRequest.getPassword().length() < 6) {
-                Map<String, String> error = new HashMap<>();
-                error.put("message", "Password must be at least 6 characters");
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
-            }
-
             log.info("Registration attempt for email: {}", registerRequest.getEmail());
 
-            // Check if user already exists
-            if (userRepository.findByEmail(registerRequest.getEmail()).isPresent()) {
-                Map<String, String> error = new HashMap<>();
-                error.put("message", "Email already registered");
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+            // Check if email already exists
+            if (userRepository.existsByEmail(registerRequest.getEmail())) {
+                return ResponseEntity.badRequest()
+                        .body(ApiResponse.error("Email is already registered"));
             }
 
-            // Check if NIM already exists (if provided)
-            if (registerRequest.getNim() != null && !registerRequest.getNim().trim().isEmpty() &&
-                    userRepository.findByNim(registerRequest.getNim()).isPresent()) {
-                Map<String, String> error = new HashMap<>();
-                error.put("message", "NIM already registered");
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+            // Check if NIM already exists (for regular users)
+            if (registerRequest.getNim() != null &&
+                    regularUserRepository.existsByNim(registerRequest.getNim())) {
+                return ResponseEntity.badRequest()
+                        .body(ApiResponse.error("NIM is already registered"));
             }
 
-            // Create new user
-            User user = new User();
+            // Get role
+            Role userRole = roleRepository.findByName("USER")
+                    .orElseThrow(() -> new RuntimeException("User Role not found"));
+
+            // Create new RegularUser (default for registration)
+            RegularUser user = new RegularUser();
             user.setName(registerRequest.getName());
             user.setEmail(registerRequest.getEmail());
-            user.setNim(registerRequest.getNim());
             user.setPassword(passwordEncoder.encode(registerRequest.getPassword()));
+            user.setRole(userRole);
+            user.setNim(registerRequest.getNim());
             user.setPhone(registerRequest.getPhone());
             user.setBirthDate(registerRequest.getBirthDate());
             user.setGender(registerRequest.getGender());
             user.setProvince(registerRequest.getProvince());
             user.setCity(registerRequest.getCity());
-            user.setRegisteredAt(LocalDateTime.now());
-            user.setUpdatedAt(LocalDateTime.now());
 
-            // Set default role (USER)
-            Role defaultRole = roleRepository.findByName("USER")
-                    .orElseGet(() -> {
-                        Role newRole = new Role();
-                        newRole.setName("USER");
-                        newRole.setDescription("Default user role");
-                        return roleRepository.save(newRole);
-                    });
-            user.setRole(defaultRole);
+            RegularUser savedUser = regularUserRepository.save(user);
 
-            // Save user
-            User savedUser = userRepository.save(user);
-
-            // Create response
-            AuthDto.RegisterResponse response = AuthDto.RegisterResponse.builder()
-                    .user(mapToUserDto(savedUser))
-                    .message("Registration successful")
-                    .build();
+            // Create UserResponse
+            UserResponse userResponse = new UserResponse();
+            userResponse.setUserId(savedUser.getUserId());
+            userResponse.setName(savedUser.getName());
+            userResponse.setEmail(savedUser.getEmail());
+            userResponse.setUserType("REGULAR");
+            userResponse.setNim(savedUser.getNim());
 
             log.info("User {} registered successfully", registerRequest.getEmail());
-            return ResponseEntity.status(HttpStatus.CREATED).body(response);
+            return ResponseEntity.status(HttpStatus.CREATED)
+                    .body(ApiResponse.success("Registration successful", userResponse));
 
         } catch (Exception e) {
-            log.error("Registration failed for email: {}", registerRequest.getEmail(), e);
-            Map<String, String> error = new HashMap<>();
-            error.put("message", "Registration failed: " + e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
-        }
-    }
-
-    @GetMapping("/me")
-    public ResponseEntity<?> getCurrentUser(Authentication authentication) {
-        try {
-            if (authentication == null || !authentication.isAuthenticated()) {
-                Map<String, String> error = new HashMap<>();
-                error.put("message", "User not authenticated");
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
-            }
-
-            String email = authentication.getName();
-            User user = userRepository.findByEmail(email)
-                    .orElseThrow(() -> new RuntimeException("User not found"));
-
-            return ResponseEntity.ok(mapToUserDto(user));
-
-        } catch (Exception e) {
-            log.error("Failed to get current user", e);
-            Map<String, String> error = new HashMap<>();
-            error.put("message", "Failed to get user information");
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
+            log.error("Registration failed", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.error("Registration failed: " + e.getMessage()));
         }
     }
 
     @PostMapping("/logout")
     public ResponseEntity<?> logout() {
-        Map<String, String> response = new HashMap<>();
-        response.put("message", "Logout successful");
-        return ResponseEntity.ok(response);
-    }
-
-    // Helper method to convert User entity to UserDto
-    private UserDto mapToUserDto(User user) {
-        UserDto dto = new UserDto();
-        dto.setUserId(user.getUserId());
-        dto.setName(user.getName());
-        dto.setEmail(user.getEmail());
-        dto.setNim(user.getNim());
-        dto.setPhone(user.getPhone());
-        dto.setBirthDate(user.getBirthDate());
-        dto.setGender(user.getGender());
-        dto.setProvince(user.getProvince());
-        dto.setCity(user.getCity());
-        dto.setRegisteredAt(user.getRegisteredAt());
-        dto.setUpdatedAt(user.getUpdatedAt());
-        if (user.getRole() != null) {
-            dto.setRoleName(user.getRole().getName());
-        }
-        return dto;
-    }
-
-    @PutMapping("/profile")
-    @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<?> updateProfile(Authentication authentication, @RequestBody UserDto userDto) {
-        try {
-            // Get email from authentication
-            String email = authentication.getName();
-            UserDto updatedUser = userService.updateProfile(email, userDto);
-            return ResponseEntity.ok(updatedUser);
-        } catch (Exception e) {
-            log.error("Error updating profile", e);
-            Map<String, String> response = new HashMap<>();
-            response.put("message", e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
-        }
+        SecurityContextHolder.clearContext();
+        return ResponseEntity.ok(ApiResponse.success("Logout successful", null));
     }
 }

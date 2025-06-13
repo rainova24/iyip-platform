@@ -1,6 +1,6 @@
 package com.itenas.iyip_platform.config;
 
-import com.itenas.iyip_platform.model.entity.*;
+import com.itenas.iyip_platform.entity.*;
 import com.itenas.iyip_platform.repository.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -59,7 +59,7 @@ public class DataInitializer implements CommandLineRunner {
             Role userRole = roleRepository.findByName("USER").orElse(null);
 
             if (adminRole != null) {
-                User adminUser = new User();
+                AdminUser adminUser = new AdminUser();
                 adminUser.setName("Admin User");
                 adminUser.setNim("ADMIN001");
                 adminUser.setEmail("admin@iyip.com");
@@ -69,7 +69,7 @@ public class DataInitializer implements CommandLineRunner {
             }
 
             if (userRole != null) {
-                User regularUser = new User();
+                RegularUser regularUser = new RegularUser();
                 regularUser.setName("Regular User");
                 regularUser.setNim("USER001");
                 regularUser.setEmail("user@iyip.com");

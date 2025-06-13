@@ -1,5 +1,7 @@
-package com.itenas.iyip_platform.model.entity;
+package com.itenas.iyip_platform.entity;
 
+import com.itenas.iyip_platform.entity.base.BaseEntity;
+import com.itenas.iyip_platform.entity.base.User;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;

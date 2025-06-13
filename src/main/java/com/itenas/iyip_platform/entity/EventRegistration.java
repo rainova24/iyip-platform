@@ -1,5 +1,7 @@
-package com.itenas.iyip_platform.model.entity;
+package com.itenas.iyip_platform.entity;
 
+import com.itenas.iyip_platform.entity.base.BaseEntity;
+import com.itenas.iyip_platform.entity.base.User;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -9,30 +11,31 @@ import lombok.Setter;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "user_communities")
+@Table(name = "event_registrations")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class UserCommunity extends BaseEntity {
+public class EventRegistration extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long userCommunityId;
+    @Column(name = "event_registration_id")
+    private Long eventRegistrationId;
 
     @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
     @ManyToOne
-    @JoinColumn(name = "community_id", nullable = false)
-    private Community community;
+    @JoinColumn(name = "event_id", nullable = false)
+    private Event event;
 
     @Column(nullable = false)
-    private LocalDateTime joinedAt;
+    private LocalDateTime registeredAt;
 
     @PrePersist
     protected void onCreate() {
-        joinedAt = LocalDateTime.now();
+        registeredAt = LocalDateTime.now();
     }
 }

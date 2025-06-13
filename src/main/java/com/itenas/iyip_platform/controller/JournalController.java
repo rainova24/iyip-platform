@@ -1,75 +1,143 @@
 package com.itenas.iyip_platform.controller;
 
-import com.itenas.iyip_platform.dto.JournalDto;
+import com.itenas.iyip_platform.dto.request.CreateJournalRequest;
+import com.itenas.iyip_platform.dto.request.UpdateJournalRequest;
+import com.itenas.iyip_platform.dto.response.JournalResponse;
+import com.itenas.iyip_platform.dto.response.ApiResponse;
 import com.itenas.iyip_platform.security.UserDetailsImpl;
 import com.itenas.iyip_platform.service.JournalService;
-import jakarta.validation.Valid;
+
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import jakarta.validation.Valid;
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/journals")
 @RequiredArgsConstructor
+@Slf4j
 public class JournalController {
 
     private final JournalService journalService;
 
     @GetMapping("/public")
-    public ResponseEntity<List<JournalDto>> getPublicJournals() {
-        return ResponseEntity.ok(journalService.findPublicJournals());
+    public ResponseEntity<?> getPublicJournals() {
+        try {
+            List<JournalResponse> journals = journalService.findPublicJournals();
+            return ResponseEntity.ok(ApiResponse.success("Public journals retrieved", journals));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest()
+                    .body(ApiResponse.error("Failed to get journals"));
+        }
     }
 
     @GetMapping
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<List<JournalDto>> getAllJournals() {
-        return ResponseEntity.ok(journalService.findAll());
+    public ResponseEntity<?> getAllJournals() {
+        try {
+            List<JournalResponse> journals = journalService.findAll();
+            return ResponseEntity.ok(ApiResponse.success("All journals retrieved", journals));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest()
+                    .body(ApiResponse.error("Failed to get journals"));
+        }
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN') or @journalSecurity.isOwnerOrPublic(#userDetails.id, #id)")
-    public ResponseEntity<JournalDto> getJournalById(
+    public ResponseEntity<?> getJournalById(
             @PathVariable Long id,
             @AuthenticationPrincipal UserDetailsImpl userDetails) {
-        return ResponseEntity.ok(journalService.findById(id));
+        try {
+            JournalResponse journal = journalService.findById(id);
+
+            // Check if journal is public or user is owner/admin
+            if (!journal.getIsPublic() &&
+                    !journal.getUserId().equals(userDetails.getId()) &&
+                    !userDetails.getAuthorities().stream()
+                            .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"))) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body(ApiResponse.error("Access denied"));
+            }
+
+            return ResponseEntity.ok(ApiResponse.success("Journal retrieved", journal));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest()
+                    .body(ApiResponse.error("Journal not found"));
+        }
     }
 
     @GetMapping("/my-journals")
-    public ResponseEntity<List<JournalDto>> getUserJournals(
-            @AuthenticationPrincipal UserDetailsImpl userDetails) {
-        return ResponseEntity.ok(journalService.findByUserId(userDetails.getId()));
+    public ResponseEntity<?> getUserJournals(@AuthenticationPrincipal UserDetailsImpl userDetails) {
+        try {
+            List<JournalResponse> journals = journalService.findByUserId(userDetails.getId());
+            return ResponseEntity.ok(ApiResponse.success("User journals retrieved", journals));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest()
+                    .body(ApiResponse.error("Failed to get journals"));
+        }
     }
 
     @PostMapping
-    public ResponseEntity<JournalDto> createJournal(
-            @Valid @RequestBody JournalDto journalDto,
+    public ResponseEntity<?> createJournal(
+            @Valid @RequestBody CreateJournalRequest request,
             @AuthenticationPrincipal UserDetailsImpl userDetails) {
-        journalDto.setUserId(userDetails.getId());
-        return new ResponseEntity<>(journalService.save(journalDto), HttpStatus.CREATED);
+        try {
+            JournalResponse journal = journalService.create(userDetails.getId(), request);
+            return ResponseEntity.status(HttpStatus.CREATED)
+                    .body(ApiResponse.success("Journal created", journal));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest()
+                    .body(ApiResponse.error("Failed to create journal"));
+        }
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN') or @journalSecurity.isOwner(#userDetails.id, #id)")
-    public ResponseEntity<JournalDto> updateJournal(
+    public ResponseEntity<?> updateJournal(
             @PathVariable Long id,
-            @Valid @RequestBody JournalDto journalDto,
+            @Valid @RequestBody UpdateJournalRequest request,
             @AuthenticationPrincipal UserDetailsImpl userDetails) {
-        journalDto.setJournalId(id);
-        journalDto.setUserId(userDetails.getId());
-        return ResponseEntity.ok(journalService.save(journalDto));
+        try {
+            // Check if user is owner or admin
+            if (!journalService.isOwner(id, userDetails.getId()) &&
+                    !userDetails.getAuthorities().stream()
+                            .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"))) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body(ApiResponse.error("Access denied"));
+            }
+
+            JournalResponse journal = journalService.update(id, request);
+            return ResponseEntity.ok(ApiResponse.success("Journal updated", journal));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest()
+                    .body(ApiResponse.error("Failed to update journal"));
+        }
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN') or @journalSecurity.isOwner(#userDetails.id, #id)")
-    public ResponseEntity<Void> deleteJournal(
+    public ResponseEntity<?> deleteJournal(
             @PathVariable Long id,
             @AuthenticationPrincipal UserDetailsImpl userDetails) {
-        journalService.deleteById(id);
-        return ResponseEntity.noContent().build();
+        try {
+            // Check if user is owner or admin
+            if (!journalService.isOwner(id, userDetails.getId()) &&
+                    !userDetails.getAuthorities().stream()
+                            .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"))) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body(ApiResponse.error("Access denied"));
+            }
+
+            journalService.deleteById(id);
+            return ResponseEntity.ok(ApiResponse.success("Journal deleted", null));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest()
+                    .body(ApiResponse.error("Failed to delete journal"));
+        }
     }
 }
