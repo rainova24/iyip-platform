@@ -3,18 +3,15 @@ package com.itenas.iyip_platform.controller;
 import com.itenas.iyip_platform.dto.request.LoginRequest;
 import com.itenas.iyip_platform.dto.request.RegisterRequest;
 import com.itenas.iyip_platform.dto.response.JwtResponse;
-import com.itenas.iyip_platform.dto.response.UserResponse;
+import com.itenas.iyip_platform.dto.response.RegularUserResponse;
 import com.itenas.iyip_platform.dto.response.ApiResponse;
 import com.itenas.iyip_platform.entity.Role;
 import com.itenas.iyip_platform.entity.RegularUser;
-import com.itenas.iyip_platform.entity.AdminUser;
 import com.itenas.iyip_platform.repository.RoleRepository;
 import com.itenas.iyip_platform.repository.UserRepository;
 import com.itenas.iyip_platform.repository.RegularUserRepository;
-import com.itenas.iyip_platform.repository.AdminUserRepository;
 import com.itenas.iyip_platform.security.JwtTokenProvider;
 import com.itenas.iyip_platform.security.UserDetailsImpl;
-import com.itenas.iyip_platform.service.UserService;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -29,7 +26,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.validation.Valid;
-import java.time.LocalDateTime;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -118,16 +114,16 @@ public class AuthController {
             RegularUser savedUser = regularUserRepository.save(user);
 
             // Create UserResponse
-            UserResponse userResponse = new UserResponse();
-            userResponse.setUserId(savedUser.getUserId());
-            userResponse.setName(savedUser.getName());
-            userResponse.setEmail(savedUser.getEmail());
-            userResponse.setUserType("REGULAR");
-            userResponse.setNim(savedUser.getNim());
+            RegularUserResponse regularUserResponse = new RegularUserResponse();
+            regularUserResponse.setUserId(savedUser.getUserId());
+            regularUserResponse.setName(savedUser.getName());
+            regularUserResponse.setEmail(savedUser.getEmail());
+            regularUserResponse.setUserType("REGULAR");
+            regularUserResponse.setNim(savedUser.getNim());
 
             log.info("User {} registered successfully", registerRequest.getEmail());
             return ResponseEntity.status(HttpStatus.CREATED)
-                    .body(ApiResponse.success("Registration successful", userResponse));
+                    .body(ApiResponse.success("Registration successful", regularUserResponse));
 
         } catch (Exception e) {
             log.error("Registration failed", e);

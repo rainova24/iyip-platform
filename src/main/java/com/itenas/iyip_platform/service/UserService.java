@@ -1,8 +1,8 @@
 package com.itenas.iyip_platform.service;
 
 import com.itenas.iyip_platform.dto.request.RegisterRequest;
-import com.itenas.iyip_platform.dto.request.UpdateUserRequest;
-import com.itenas.iyip_platform.dto.response.UserResponse;
+import com.itenas.iyip_platform.dto.request.UpdateRegularUserRequest;
+import com.itenas.iyip_platform.dto.response.RegularUserResponse;
 import com.itenas.iyip_platform.dto.response.CommunityResponse;
 import com.itenas.iyip_platform.dto.response.EventResponse;
 
@@ -12,13 +12,13 @@ import org.springframework.data.domain.Pageable;
 import java.util.List;
 
 public interface UserService {
-    UserResponse findById(Long id);
-    UserResponse findByEmail(String email);
-    Page<UserResponse> findAll(Pageable pageable);
-    List<UserResponse> findByUserType(String userType);
-    UserResponse createUser(RegisterRequest request);
-    UserResponse updateProfile(Long userId, UpdateUserRequest request);
-    UserResponse updateUser(Long userId, UpdateUserRequest request);
+    RegularUserResponse findById(Long id);
+    RegularUserResponse findByEmail(String email);
+    Page<RegularUserResponse> findAll(Pageable pageable);
+    List<RegularUserResponse> findByUserType(String userType);
+    RegularUserResponse createUser(RegisterRequest request);
+    RegularUserResponse updateProfile(Long userId, UpdateRegularUserRequest request);
+    RegularUserResponse updateUser(Long userId, UpdateRegularUserRequest request);
     void deleteById(Long id);
     boolean existsByEmail(String email);
     List<CommunityResponse> getUserCommunities(Long userId);
