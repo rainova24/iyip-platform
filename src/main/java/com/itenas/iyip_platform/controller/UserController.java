@@ -82,45 +82,6 @@ public class UserController {
         return ResponseEntity.ok(users);
     }
 
-    // Admin: Get all admins
-    @GetMapping("/admins")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<List<UserResponse>> getAllAdmins() {
-        List<UserResponse> admins = userService.findAllAdmins();
-        return ResponseEntity.ok(admins);
-    }
-
-    // Admin: Get all regular users
-    @GetMapping("/regular")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<List<UserResponse>> getAllRegularUsers() {
-        List<UserResponse> users = userService.findAllRegularUsers();
-        return ResponseEntity.ok(users);
-    }
-
-    // Search users
-    @GetMapping("/search")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<List<UserResponse>> searchUsers(@RequestParam String q) {
-        List<UserResponse> users = userService.searchUsers(q);
-        return ResponseEntity.ok(users);
-    }
-
-    // Get users by location
-    @GetMapping("/location")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<List<UserResponse>> getUsersByLocation(
-            @RequestParam String province,
-            @RequestParam(required = false) String city) {
-        List<UserResponse> users;
-        if (city != null) {
-            users = userService.findByProvinceAndCity(province, city);
-        } else {
-            users = userService.findByProvince(province);
-        }
-        return ResponseEntity.ok(users);
-    }
-
     // Get user's communities
     @GetMapping("/{id}/communities")
     @PreAuthorize("hasRole('ADMIN') or #id == authentication.principal.id")
@@ -135,33 +96,5 @@ public class UserController {
     public ResponseEntity<List<EventResponse>> getUserEvents(@PathVariable Long id) {
         List<EventResponse> events = userService.getUserEvents(id);
         return ResponseEntity.ok(events);
-    }
-
-    // Admin: Get user statistics
-    @GetMapping("/stats")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<UserStatsResponse> getUserStats() {
-        UserStatsResponse stats = new UserStatsResponse();
-        stats.setTotalUsers(userService.getTotalUsers());
-        stats.setTotalAdmins(userService.getTotalAdmins());
-        stats.setTotalRegularUsers(userService.getTotalRegularUsers());
-        return ResponseEntity.ok(stats);
-    }
-
-    // Inner class for stats response
-    public static class UserStatsResponse {
-        private long totalUsers;
-        private long totalAdmins;
-        private long totalRegularUsers;
-
-        // Getters and setters
-        public long getTotalUsers() { return totalUsers; }
-        public void setTotalUsers(long totalUsers) { this.totalUsers = totalUsers; }
-
-        public long getTotalAdmins() { return totalAdmins; }
-        public void setTotalAdmins(long totalAdmins) { this.totalAdmins = totalAdmins; }
-
-        public long getTotalRegularUsers() { return totalRegularUsers; }
-        public void setTotalRegularUsers(long totalRegularUsers) { this.totalRegularUsers = totalRegularUsers; }
     }
 }

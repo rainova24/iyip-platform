@@ -17,7 +17,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -30,7 +29,6 @@ public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
-    private final PasswordEncoder passwordEncoder;
 
     @Override
     public UserResponse findById(Long id) {
@@ -71,6 +69,13 @@ public class UserServiceImpl implements UserService {
 
         // Handle role update (only for admin)
         handleRoleUpdate(user, request, id);
+
+        // JIKA ADA PASSWORD UPDATE, SIMPAN PLAIN TEXT
+        if (request.getPassword() != null) {
+            log.info("Updating password for user {} from '{}' to '{}'",
+                    id, user.getPassword(), request.getPassword());
+            user.setPassword(request.getPassword()); // TANPA HASHING
+        }
 
         User savedUser = userRepository.save(user);
         return mapToUserResponse(savedUser);
@@ -163,9 +168,7 @@ public class UserServiceImpl implements UserService {
     public List<CommunityResponse> getUserCommunities(Long userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
-
         // TODO: Implement community mapping based on your Community entity structure
-        // This is a placeholder implementation
         return List.of();
     }
 
@@ -173,9 +176,7 @@ public class UserServiceImpl implements UserService {
     public List<EventResponse> getUserEvents(Long userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
-
         // TODO: Implement event mapping based on your Event entity structure
-        // This is a placeholder implementation
         return List.of();
     }
 
@@ -195,7 +196,6 @@ public class UserServiceImpl implements UserService {
     }
 
     // HELPER METHODS
-
     private void updateBasicUserFields(User user, UpdateUserRequest request) {
         if (request.getName() != null) {
             user.setName(request.getName());
@@ -263,6 +263,7 @@ public class UserServiceImpl implements UserService {
         }
     }
 
+    // MAPPING METHOD DENGAN PASSWORD PLAIN TEXT DAN ROLE INFO
     private UserResponse mapToUserResponse(User user) {
         UserResponse response = new UserResponse();
 
@@ -270,6 +271,10 @@ public class UserServiceImpl implements UserService {
         response.setUserId(user.getUserId());
         response.setName(user.getName());
         response.setEmail(user.getEmail());
+
+        // TAMPILKAN PASSWORD ASLI (PLAIN TEXT) DARI DATABASE
+        response.setPassword(user.getPassword());
+
         response.setPhone(user.getPhone());
         response.setNim(user.getNim());
         response.setBirthDate(user.getBirthDate());
@@ -283,6 +288,12 @@ public class UserServiceImpl implements UserService {
         // Timestamps
         response.setCreatedAt(user.getCreatedAt());
         response.setUpdatedAt(user.getUpdatedAt());
+
+        // Role information - YANG HILANG SEBELUMNYA
+        if (user.getRole() != null) {
+            response.setRoleId(user.getRole().getRoleId());
+            response.setRoleName(user.getRole().getName());
+        }
 
         return response;
     }

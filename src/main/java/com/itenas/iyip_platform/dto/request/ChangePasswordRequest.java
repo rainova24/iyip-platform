@@ -17,7 +17,6 @@ public class ChangePasswordRequest {
     @NotBlank(message = "Confirm password is required")
     private String confirmPassword;
 
-    // Validation method
     public boolean isPasswordsMatch() {
         return newPassword != null && newPassword.equals(confirmPassword);
     }

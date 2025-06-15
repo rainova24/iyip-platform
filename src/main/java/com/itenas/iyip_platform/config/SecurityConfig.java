@@ -14,7 +14,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.NoOpPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
@@ -34,8 +34,11 @@ public class SecurityConfig {
     private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
 
     @Bean
+    @SuppressWarnings("deprecation")
     public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
+        // GANTI BCryptPasswordEncoder dengan NoOpPasswordEncoder
+        // return new BCryptPasswordEncoder(); // YANG LAMA
+        return NoOpPasswordEncoder.getInstance(); // YANG BARU - TIDAK ADA HASHING
     }
 
     @Bean
@@ -58,11 +61,11 @@ public class SecurityConfig {
                 .exceptionHandling(ex -> ex.authenticationEntryPoint(jwtAuthenticationEntryPoint))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(authz -> authz
-                        // Public endpoints - ALLOW COMMUNITIES
+                        // Public endpoints - SESUAI KODE ASLI ANDA
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/api/public/**").permitAll()
-                        .requestMatchers("/api/communities").permitAll()  // ← TAMBAHKAN INI
-                        .requestMatchers("/api/communities/**").permitAll()  // ← TAMBAHKAN INI
+                        .requestMatchers("/api/communities").permitAll()
+                        .requestMatchers("/api/communities/**").permitAll()
                         .requestMatchers("/api/events/**").permitAll()
                         .requestMatchers("/api/journals/public").permitAll()
                         .requestMatchers("/api/journals/{id}").permitAll()

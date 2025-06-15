@@ -14,7 +14,7 @@ public class RegisterRequest {
     private String name;
 
     @NotBlank(message = "Email is required")
-    @Email(message = "Email must be valid")
+    @Email(message = "Email should be valid")
     private String email;
 
     @Size(max = 11, message = "NIM must be max 11 characters")

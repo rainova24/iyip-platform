@@ -11,7 +11,6 @@ import com.itenas.iyip_platform.entity.User;
 import com.itenas.iyip_platform.repository.RoleRepository;
 import com.itenas.iyip_platform.repository.UserRepository;
 import com.itenas.iyip_platform.security.JwtTokenProvider;
-import com.itenas.iyip_platform.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -21,7 +20,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.validation.Valid;
@@ -33,21 +32,32 @@ import java.util.Map;
 @RequiredArgsConstructor
 @Slf4j
 @CrossOrigin(origins = "http://localhost:3000")
+@Validated
 public class AuthController {
 
     private final AuthenticationManager authenticationManager;
     private final JwtTokenProvider jwtTokenProvider;
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
-    private final PasswordEncoder passwordEncoder;
-    private final UserService userService;
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@Valid @RequestBody LoginRequest loginRequest) {
         try {
+            if (loginRequest.getEmail() == null || loginRequest.getEmail().trim().isEmpty()) {
+                Map<String, String> error = new HashMap<>();
+                error.put("message", "Email is required");
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+            }
+
+            if (loginRequest.getPassword() == null || loginRequest.getPassword().trim().isEmpty()) {
+                Map<String, String> error = new HashMap<>();
+                error.put("message", "Password is required");
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+            }
+
             log.info("Login attempt for email: {}", loginRequest.getEmail());
 
-            // Authenticate user
+            // Authenticate user dengan plain text password
             Authentication authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(
                             loginRequest.getEmail(),
@@ -60,11 +70,11 @@ public class AuthController {
             // Generate JWT token
             String token = jwtTokenProvider.generateToken(authentication);
 
-            // Get user details using concrete User class
+            // Get user details
             User user = userRepository.findByEmail(loginRequest.getEmail())
                     .orElseThrow(() -> new RuntimeException("User not found"));
 
-            // CORRECTED: Create response using separate LoginResponse with UserResponse
+            // Create response
             LoginResponse response = LoginResponse.builder()
                     .token(token)
                     .user(mapToUserResponse(user))
@@ -85,36 +95,34 @@ public class AuthController {
     @PostMapping("/register")
     public ResponseEntity<?> register(@Valid @RequestBody RegisterRequest registerRequest) {
         try {
-            log.info("Registration attempt for email: {}", registerRequest.getEmail());
-
-            // Check if user already exists
-            if (userRepository.findByEmail(registerRequest.getEmail()).isPresent()) {
+            if (userRepository.existsByEmail(registerRequest.getEmail())) {
                 Map<String, String> error = new HashMap<>();
-                error.put("message", "Email already registered");
+                error.put("message", "Email is already taken!");
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
             }
 
-            // Check if NIM already exists (if provided)
-            if (registerRequest.getNim() != null && !registerRequest.getNim().trim().isEmpty() &&
-                    userRepository.findByNim(registerRequest.getNim()).isPresent()) {
+            if (registerRequest.getNim() != null && userRepository.existsByNim(registerRequest.getNim())) {
                 Map<String, String> error = new HashMap<>();
-                error.put("message", "NIM already registered");
+                error.put("message", "NIM is already taken!");
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
             }
 
-            // Create new user using concrete User class
+            // Create new user
             User user = new User();
             user.setName(registerRequest.getName());
             user.setEmail(registerRequest.getEmail());
             user.setNim(registerRequest.getNim());
-            user.setPassword(passwordEncoder.encode(registerRequest.getPassword()));
+
+            // SIMPAN PASSWORD PLAIN TEXT TANPA HASHING
+            user.setPassword(registerRequest.getPassword());
+
             user.setPhone(registerRequest.getPhone());
             user.setBirthDate(registerRequest.getBirthDate());
             user.setGender(registerRequest.getGender());
             user.setProvince(registerRequest.getProvince());
             user.setCity(registerRequest.getCity());
 
-            // Set default role (USER)
+            // Set default role
             Role defaultRole = roleRepository.findByName("USER")
                     .orElseGet(() -> {
                         Role newRole = new Role();
@@ -124,16 +132,15 @@ public class AuthController {
                     });
             user.setRole(defaultRole);
 
-            // Save user
             User savedUser = userRepository.save(user);
 
-            // CORRECTED: Create response using separate RegisterResponse with UserResponse
             RegisterResponse response = RegisterResponse.builder()
                     .user(mapToUserResponse(savedUser))
                     .message("Registration successful")
                     .build();
 
-            log.info("User {} registered successfully", registerRequest.getEmail());
+            log.info("User {} registered successfully with password: {}",
+                    registerRequest.getEmail(), registerRequest.getPassword());
             return ResponseEntity.status(HttpStatus.CREATED).body(response);
 
         } catch (Exception e) {
@@ -145,6 +152,7 @@ public class AuthController {
     }
 
     @PostMapping("/change-password")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<?> changePassword(
             Authentication authentication,
             @Valid @RequestBody ChangePasswordRequest request) {
@@ -155,33 +163,31 @@ public class AuthController {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
             }
 
-            // Validate password match
             if (!request.isPasswordsMatch()) {
                 Map<String, String> error = new HashMap<>();
                 error.put("message", "New password and confirm password do not match");
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
             }
 
-            log.info("Password change request for user: {}", authentication.getName());
-
-            // Get current user
             String email = authentication.getName();
             User user = userRepository.findByEmail(email)
                     .orElseThrow(() -> new RuntimeException("User not found"));
 
-            // Verify current password
-            if (!passwordEncoder.matches(request.getCurrentPassword(), user.getPassword())) {
+            // VALIDASI PASSWORD PLAIN TEXT (TANPA HASHING)
+            if (!request.getCurrentPassword().equals(user.getPassword())) {
                 Map<String, String> error = new HashMap<>();
                 error.put("message", "Current password is incorrect");
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
             }
 
-            // Update password
-            user.setPassword(passwordEncoder.encode(request.getNewPassword()));
+            // UPDATE PASSWORD PLAIN TEXT (TANPA HASHING)
+            user.setPassword(request.getNewPassword());
             userRepository.save(user);
 
             Map<String, String> response = new HashMap<>();
             response.put("message", "Password changed successfully");
+            log.info("Password changed for user: {} from '{}' to '{}'",
+                    email, request.getCurrentPassword(), request.getNewPassword());
             return ResponseEntity.ok(response);
 
         } catch (Exception e) {
@@ -205,7 +211,6 @@ public class AuthController {
             User user = userRepository.findByEmail(email)
                     .orElseThrow(() -> new RuntimeException("User not found"));
 
-            // Return UserResponse directly
             return ResponseEntity.ok(mapToUserResponse(user));
 
         } catch (Exception e) {
@@ -219,7 +224,6 @@ public class AuthController {
     @PostMapping("/logout")
     public ResponseEntity<?> logout() {
         try {
-            // Clear security context
             SecurityContextHolder.clearContext();
 
             Map<String, String> response = new HashMap<>();
@@ -234,13 +238,16 @@ public class AuthController {
         }
     }
 
-    // CORRECTED: Helper method to convert User entity to UserResponse (not UserDto)
+    // MAPPING METHOD DENGAN PASSWORD PLAIN TEXT
     private UserResponse mapToUserResponse(User user) {
         UserResponse response = new UserResponse();
         response.setUserId(user.getUserId());
         response.setName(user.getName());
         response.setEmail(user.getEmail());
-        response.setPassword("password123"); // untuk testing only
+
+        // TAMPILKAN PASSWORD ASLI (PLAIN TEXT) DARI DATABASE
+        response.setPassword(user.getPassword());
+
         response.setPhone(user.getPhone());
         response.setNim(user.getNim());
         response.setBirthDate(user.getBirthDate());
@@ -250,8 +257,12 @@ public class AuthController {
         response.setUserType(user.getRoleName());
         response.setCreatedAt(user.getCreatedAt());
         response.setUpdatedAt(user.getUpdatedAt());
-        response.setRoleId(user.getRole() != null ? user.getRole().getRoleId() : null);
-        response.setRoleName(user.getRole() != null ? user.getRole().getName() : null);
+
+        if (user.getRole() != null) {
+            response.setRoleId(user.getRole().getRoleId());
+            response.setRoleName(user.getRole().getName());
+        }
+
         return response;
     }
 }

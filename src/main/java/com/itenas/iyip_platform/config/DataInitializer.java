@@ -19,7 +19,7 @@ public class DataInitializer implements CommandLineRunner {
     private final UserRepository userRepository;
     private final CommunityRepository communityRepository;
     private final EventRepository eventRepository;
-    private final PasswordEncoder passwordEncoder;
+    // HAPUS passwordEncoder karena tidak digunakan lagi
 
     @Override
     public void run(String... args) throws Exception {
@@ -64,10 +64,16 @@ public class DataInitializer implements CommandLineRunner {
                 adminUser.setName("Admin User");
                 adminUser.setNim("ADMIN001");
                 adminUser.setEmail("admin@iyip.com");
-                adminUser.setPassword(passwordEncoder.encode("admin123"));
+                // SIMPAN PASSWORD PLAIN TEXT - JANGAN DI HASH!
+                adminUser.setPassword("admin123"); // LANGSUNG PLAIN TEXT
+                adminUser.setPhone("081234567890");
+                adminUser.setBirthDate(LocalDate.of(1985, 1, 1));
+                adminUser.setGender(User.Gender.LAKI_LAKI);
+                adminUser.setProvince("Jawa Barat");
+                adminUser.setCity("Bandung");
                 adminUser.setRole(adminRole);
                 userRepository.save(adminUser);
-                log.info("Admin user created: {}", adminUser.getEmail());
+                log.info("Admin user created: {} with password: {}", adminUser.getEmail(), "admin123");
             }
 
             if (userRole != null) {
@@ -76,15 +82,31 @@ public class DataInitializer implements CommandLineRunner {
                 regularUser.setName("Regular User");
                 regularUser.setNim("USER001");
                 regularUser.setEmail("user@iyip.com");
-                regularUser.setPassword(passwordEncoder.encode("user123"));
+                // SIMPAN PASSWORD PLAIN TEXT - JANGAN DI HASH!
+                regularUser.setPassword("user123"); // LANGSUNG PLAIN TEXT
+                regularUser.setPhone("081234567891");
                 regularUser.setBirthDate(LocalDate.of(1990, 1, 1));
-                regularUser.setGender(User.Gender.LAKI_LAKI);
-                regularUser.setPhone("081234567890");
+                regularUser.setGender(User.Gender.PEREMPUAN);
                 regularUser.setProvince("Jawa Barat");
                 regularUser.setCity("Bandung");
                 regularUser.setRole(userRole);
                 userRepository.save(regularUser);
-                log.info("Regular user created: {}", regularUser.getEmail());
+                log.info("Regular user created: {} with password: {}", regularUser.getEmail(), "user123");
+
+                // Create additional test user
+                User testUser = new User();
+                testUser.setName("Test User");
+                testUser.setNim("TEST001");
+                testUser.setEmail("test@iyip.com");
+                testUser.setPassword("password123"); // LANGSUNG PLAIN TEXT
+                testUser.setPhone("081234567892");
+                testUser.setBirthDate(LocalDate.of(1995, 1, 1));
+                testUser.setGender(User.Gender.LAKI_LAKI);
+                testUser.setProvince("Jawa Barat");
+                testUser.setCity("Bandung");
+                testUser.setRole(userRole);
+                userRepository.save(testUser);
+                log.info("Test user created: {} with password: {}", testUser.getEmail(), "password123");
             }
 
             log.info("Default users created successfully");
@@ -93,43 +115,58 @@ public class DataInitializer implements CommandLineRunner {
 
     private void initializeCommunities() {
         if (communityRepository.count() == 0) {
-            log.info("Creating default communities...");
+            log.info("Creating sample communities...");
 
-            Community techCommunity = new Community();
-            techCommunity.setName("Technology Community");
-            techCommunity.setDescription("Community for technology enthusiasts");
-            communityRepository.save(techCommunity);
+            String[][] communities = {
+                    {"Technology Enthusiasts", "Community for technology lovers and professionals"},
+                    {"Academic Research", "Community focused on academic research and publications"},
+                    {"Student Organizations", "Community for various student organizations"},
+                    {"Creative Arts", "Community for artists, designers, and creative professionals"},
+                    {"Sports & Recreation", "Community for sports enthusiasts and recreational activities"},
+                    {"Environmental Awareness", "Community focused on environmental conservation and sustainability"}
+            };
 
-            Community sportsCommunity = new Community();
-            sportsCommunity.setName("Sports Community");
-            sportsCommunity.setDescription("Community for sports lovers");
-            communityRepository.save(sportsCommunity);
+            for (String[] communityData : communities) {
+                Community community = new Community();
+                community.setName(communityData[0]);
+                community.setDescription(communityData[1]);
+                communityRepository.save(community);
+            }
 
-            log.info("Default communities created successfully");
+            log.info("Sample communities created successfully");
         }
     }
 
     private void initializeEvents() {
         if (eventRepository.count() == 0) {
-            log.info("Creating default events...");
+            log.info("Creating sample events...");
 
-            Event techEvent = new Event();
-            techEvent.setTitle("Tech Conference 2024");
-            techEvent.setDescription("Annual technology conference");
-            techEvent.setStartDate(LocalDate.now().plusDays(30));
-            techEvent.setEndDate(LocalDate.now().plusDays(32));
-            techEvent.setRegistrationDeadline(LocalDate.now().plusDays(15));
-            eventRepository.save(techEvent);
+            Object[][] events = {
+                    {"Tech Innovation Summit 2025", "Annual technology innovation summit featuring latest trends and technologies",
+                            LocalDate.of(2025, 8, 15), LocalDate.of(2025, 8, 17), LocalDate.of(2025, 8, 1)},
+                    {"Academic Research Conference", "International conference on academic research methodologies",
+                            LocalDate.of(2025, 9, 10), LocalDate.of(2025, 9, 12), LocalDate.of(2025, 8, 25)},
+                    {"Creative Arts Workshop", "Workshop series on various creative arts techniques",
+                            LocalDate.of(2025, 7, 20), LocalDate.of(2025, 7, 22), LocalDate.of(2025, 7, 10)},
+                    {"Student Leadership Forum", "Forum for developing student leadership skills",
+                            LocalDate.of(2025, 10, 5), LocalDate.of(2025, 10, 6), LocalDate.of(2025, 9, 20)},
+                    {"Environmental Sustainability Seminar", "Seminar on environmental sustainability practices",
+                            LocalDate.of(2025, 11, 15), LocalDate.of(2025, 11, 16), LocalDate.of(2025, 11, 1)},
+                    {"Sports Tournament 2025", "Annual inter-community sports tournament",
+                            LocalDate.of(2025, 12, 1), LocalDate.of(2025, 12, 3), LocalDate.of(2025, 11, 15)}
+            };
 
-            Event sportsEvent = new Event();
-            sportsEvent.setTitle("Sports Festival 2024");
-            sportsEvent.setDescription("Annual sports festival");
-            sportsEvent.setStartDate(LocalDate.now().plusDays(45));
-            sportsEvent.setEndDate(LocalDate.now().plusDays(47));
-            sportsEvent.setRegistrationDeadline(LocalDate.now().plusDays(30));
-            eventRepository.save(sportsEvent);
+            for (Object[] eventData : events) {
+                Event event = new Event();
+                event.setTitle((String) eventData[0]);
+                event.setDescription((String) eventData[1]);
+                event.setStartDate((LocalDate) eventData[2]);
+                event.setEndDate((LocalDate) eventData[3]);
+                event.setRegistrationDeadline((LocalDate) eventData[4]);
+                eventRepository.save(event);
+            }
 
-            log.info("Default events created successfully");
+            log.info("Sample events created successfully");
         }
     }
 }
