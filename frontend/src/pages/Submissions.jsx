@@ -149,19 +149,19 @@ const Submissions = () => {
                 {/* Statistics */}
                 <div className="stats-grid mb-4">
                     <div className="stat-card text-center">
-                        <div className="stat-number">{submissions.length}</div>
+                        <div className="stat-number" style={{color: '#FF6B35', fontSize: '3rem', fontWeight: '900', textShadow: '0 2px 4px rgba(142, 53, 21, 0.2)'}}>{submissions.length}</div>
                         <div className="stat-label">Total Submissions</div>
                     </div>
                     <div className="stat-card text-center">
-                        <div className="stat-number">{submissions.filter(s => s.status === 'PENDING').length}</div>
+                        <div className="stat-number" style={{color: '#FF6B35', fontSize: '3rem', fontWeight: '900', textShadow: '0 2px 4px rgba(142, 53, 21, 0.2)'}}>{submissions.filter(s => s.status === 'PENDING').length}</div>
                         <div className="stat-label">Pending</div>
                     </div>
                     <div className="stat-card text-center">
-                        <div className="stat-number">{submissions.filter(s => s.status === 'APPROVED').length}</div>
+                        <div className="stat-number" style={{color: '#FF6B35', fontSize: '3rem', fontWeight: '900', textShadow: '0 2px 4px rgba(142, 53, 21, 0.2)'}}>{submissions.filter(s => s.status === 'APPROVED').length}</div>
                         <div className="stat-label">Approved</div>
                     </div>
                     <div className="stat-card text-center">
-                        <div className="stat-number">{submissions.filter(s => s.status === 'REJECTED').length}</div>
+                        <div className="stat-number" style={{color: '#FF6B35', fontSize: '3rem', fontWeight: '900', textShadow: '0 2px 4px rgba(142, 53, 21, 0.2)'}}>{submissions.filter(s => s.status === 'REJECTED').length}</div>
                         <div className="stat-label">Rejected</div>
                     </div>
                 </div>

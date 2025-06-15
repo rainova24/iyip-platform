@@ -27,8 +27,8 @@ const Navbar = () => {
         { path: '/dashboard', label: 'Dashboard', icon: 'fas fa-tachometer-alt' },
         { path: '/journals', label: 'Journals', icon: 'fas fa-book-open' },
         { path: '/events', label: 'Events', icon: 'fas fa-calendar-alt' },
-        { path: '/submissions', label: 'Submissions', icon: 'fas fa-paper-plane' },
         { path: '/communities', label: 'Communities', icon: 'fas fa-users' },
+        { path: '/submissions', label: 'Submissions', icon: 'fas fa-paper-plane' },
     ];
 
     const adminItems = [

@@ -1,4 +1,5 @@
 // frontend/src/pages/Dashboard.jsx
+import { useNavigate } from 'react-router-dom';
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { journalService, submissionService } from '../services/submission';
@@ -13,6 +14,8 @@ const Dashboard = () => {
         totalCommunities: 0,
         totalSubmissions: 0
     });
+
+    const navigate = useNavigate();
 
     useEffect(() => {
         loadDashboardData();
@@ -101,7 +104,7 @@ const Dashboard = () => {
                                 <div className="stat-icon journals">
                                     <i className="fas fa-book-open"></i>
                                 </div>
-                                <div className="stat-number">{stats.myJournals}</div>
+                                <div className="stat-number" style={{color: '#667eea', fontSize: '3rem', fontWeight: '900'}}>{stats.myJournals}</div>
                             </div>
                             <div className="stat-label">My Journals</div>
                             <div className="stat-description">Published research papers and articles</div>
@@ -112,7 +115,7 @@ const Dashboard = () => {
                                 <div className="stat-icon events">
                                     <i className="fas fa-calendar-alt"></i>
                                 </div>
-                                <div className="stat-number">{stats.registeredEvents}</div>
+                                <div className="stat-number" style={{color: '#f5576c', fontSize: '3rem', fontWeight: '900', textShadow: '0 2px 4px rgba(245, 87, 108, 0.3)'}}>{stats.registeredEvents}</div>
                             </div>
                             <div className="stat-label">Registered Events</div>
                             <div className="stat-description">Upcoming events and workshops</div>
@@ -123,7 +126,7 @@ const Dashboard = () => {
                                 <div className="stat-icon communities">
                                     <i className="fas fa-users"></i>
                                 </div>
-                                <div className="stat-number">{stats.totalCommunities}</div>
+                                <div className="stat-number" style={{color: '#00f2fe', fontSize: '3rem', fontWeight: '900', textShadow: '0 2px 4px rgba(0, 242, 254, 0.3)'}}>{stats.totalCommunities}</div>
                             </div>
                             <div className="stat-label">Communities</div>
                             <div className="stat-description">Active research communities</div>
@@ -134,7 +137,7 @@ const Dashboard = () => {
                                 <div className="stat-icon submissions">
                                     <i className="fas fa-upload"></i>
                                 </div>
-                                <div className="stat-number">{stats.totalSubmissions}</div>
+                                <div className="stat-number" style={{color: '#43e97b', fontSize: '3rem', fontWeight: '900', textShadow: '0 2px 4px rgba(67, 233, 123, 0.3)'}}>{stats.totalSubmissions}</div>
                             </div>
                             <div className="stat-label">Submissions</div>
                             <div className="stat-description">Pending and approved submissions</div>
@@ -152,7 +155,10 @@ const Dashboard = () => {
                             </div>
                             <h3>Create Journal</h3>
                             <p>Start writing a new research journal or article</p>
-                            <button className="btn btn-primary">
+                            <button
+                                className="btn btn-primary"
+                                onClick={() => navigate('/journals')}
+                            >
                                 <i className="fas fa-edit"></i> New Journal
                             </button>
                         </div>
@@ -163,7 +169,10 @@ const Dashboard = () => {
                             </div>
                             <h3>Join Event</h3>
                             <p>Browse and register for upcoming events</p>
-                            <button className="btn btn-outline">
+                            <button
+                                className="btn btn-outline"
+                                onClick={() => navigate('/events')}
+                            >
                                 <i className="fas fa-search"></i> Browse Events
                             </button>
                         </div>
@@ -174,7 +183,10 @@ const Dashboard = () => {
                             </div>
                             <h3>Join Community</h3>
                             <p>Connect with like-minded researchers</p>
-                            <button className="btn btn-outline">
+                            <button
+                                className="btn btn-outline"
+                                onClick={() => navigate('/communities')}
+                            >
                                 <i className="fas fa-handshake"></i> Explore Communities
                             </button>
                         </div>
@@ -183,9 +195,12 @@ const Dashboard = () => {
                             <div className="action-icon">
                                 <i className="fas fa-upload"></i>
                             </div>
-                            <h3>Submit Material</h3>
+                            <h3>Submit Submission</h3>
                             <p>Submit research materials or facility requests</p>
-                            <button className="btn btn-primary">
+                            <button
+                                className="btn btn-primary"
+                                onClick={() => navigate('/submissions')}
+                            >
                                 <i className="fas fa-paper-plane"></i> New Submission
                             </button>
                         </div>

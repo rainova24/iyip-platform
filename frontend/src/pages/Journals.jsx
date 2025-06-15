@@ -136,19 +136,19 @@ const Journals = () => {
                 {/* Statistics */}
                 <div className="journals-stats">
                     <div className="stat-item">
-                        <span className="stat-number">{journals.length + myJournals.length}</span>
+                        <span className="stat-number" style={{color: '#FF6B35', fontSize: '3rem', fontWeight: '900', textShadow: '0 2px 4px rgba(142, 53, 21, 0.1)'}}>{journals.length + myJournals.length}</span>
                         <span className="stat-label">Total Journals</span>
                     </div>
                     <div className="stat-item">
-                        <span className="stat-number">{journals.filter(j => j.isPublic).length}</span>
+                        <span className="stat-number"style={{color: '#FF6B35', fontSize: '3rem', fontWeight: '900', textShadow: '0 2px 4px rgba(142, 53, 21, 0.1)'}}>{journals.filter(j => j.isPublic).length}</span>
                         <span className="stat-label">Public</span>
                     </div>
                     <div className="stat-item">
-                        <span className="stat-number">{myJournals.length}</span>
+                        <span className="stat-number"style={{color: '#FF6B35', fontSize: '3rem', fontWeight: '900', textShadow: '0 2px 4px rgba(142, 53, 21, 0.1)'}}>{myJournals.length}</span>
                         <span className="stat-label">My Journals</span>
                     </div>
                     <div className="stat-item">
-                        <span className="stat-number">{journals.reduce((sum, j) => sum + (j.views || 0), 0)}</span>
+                        <span className="stat-number"style={{color: '#FF6B35', fontSize: '3rem', fontWeight: '900', textShadow: '0 2px 4px rgba(142, 53, 21, 0.1)'}}>{journals.reduce((sum, j) => sum + (j.views || 0), 0)}</span>
                         <span className="stat-label">Total Views</span>
                     </div>
                 </div>

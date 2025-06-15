@@ -123,7 +123,7 @@ const Login = () => {
                     </div>
                     <h1 className="form-title">Welcome Back!</h1>
                     <p style={{ 
-                        color: 'var(--text-light)', 
+                        color: 'rgba(26,26,26,1)',
                         fontSize: '1.1rem',
                         margin: '0'
                     }}>
@@ -164,7 +164,7 @@ const Login = () => {
                 {/* Login Form */}
                 <form onSubmit={handleSubmit}>
                     <div className="form-group">
-                        <label htmlFor="email" className="form-label">
+                        <label htmlFor="email" className="form-label" style={{color: "rgba(26,26,26,1)"}}>
                             <i className="fas fa-envelope"></i>
                             Email Address
                         </label>
@@ -189,7 +189,7 @@ const Login = () => {
                     </div>
 
                     <div className="form-group">
-                        <label htmlFor="password" className="form-label">
+                        <label htmlFor="password" className="form-label" style={{color: "rgba(26,26,26,1)"}}>
                             <i className="fas fa-lock"></i>
                             Password
                         </label>
@@ -248,14 +248,14 @@ const Login = () => {
                             gap: '0.5rem',
                             cursor: 'pointer',
                             fontSize: '0.9rem',
-                            color: 'var(--text-light)'
+                            color: 'rgba(26,26,26,1)'
                         }}>
                             <input 
                                 type="checkbox" 
                                 style={{
                                     width: '16px',
                                     height: '16px',
-                                    accentColor: 'var(--primary-orange)'
+                                    accentColor: 'var(--dark-orange)'
                                 }}
                             />
                             Remember me
@@ -306,8 +306,8 @@ const Login = () => {
                     </button>
 
                     <div style={{ textAlign: 'center' }}>
-                        <p style={{ 
-                            color: 'var(--text-light)', 
+                        <p style={{
+                            color: "rgba(26,26,26,1)",
                             marginBottom: '1rem' 
                         }}>
                             Don't have an account?
