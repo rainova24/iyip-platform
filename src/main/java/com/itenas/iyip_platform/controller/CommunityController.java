@@ -20,6 +20,8 @@ import org.springframework.web.bind.annotation.*;
 import jakarta.validation.Valid;
 import java.util.List;
 
+import java.util.Map;
+
 @RestController
 @RequestMapping("/api/communities")
 @RequiredArgsConstructor
@@ -29,6 +31,7 @@ public class CommunityController {
     private final CommunityService communityService;
 
     // ===== PUBLIC ENDPOINTS =====
+
 
     /**
      * Get all communities
@@ -80,6 +83,9 @@ public class CommunityController {
 
     // ===== USER ENDPOINTS =====
 
+
+
+
     /**
      * Get user's communities (for logged in user)
      * GET /api/communities/my-communities
@@ -87,10 +93,19 @@ public class CommunityController {
     @GetMapping("/my-communities")
     public ResponseEntity<?> getMyUserCommunities(@AuthenticationPrincipal UserDetailsImpl userDetails) {
         try {
+            // Add null check for userDetails
+            if (userDetails == null) {
+                log.warn("UserDetails is null - user not authenticated");
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(ApiResponse.error("Authentication required"));
+            }
+
+            log.debug("Getting communities for user: {}", userDetails.getId());
             List<CommunityResponse> communities = communityService.findByUserId(userDetails.getId());
             return ResponseEntity.ok(ApiResponse.success("User communities retrieved successfully", communities));
         } catch (Exception e) {
-            log.error("Error getting user communities for user: {}", userDetails.getId(), e);
+            log.error("Error getting user communities for user: {}",
+                    userDetails != null ? userDetails.getId() : "null", e);
             return ResponseEntity.badRequest()
                     .body(ApiResponse.error("Failed to get user communities"));
         }
@@ -105,10 +120,24 @@ public class CommunityController {
             @PathVariable Long id,
             @AuthenticationPrincipal UserDetailsImpl userDetails) {
         try {
+            // Add null check for userDetails
+            if (userDetails == null) {
+                log.warn("UserDetails is null - user not authenticated");
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(ApiResponse.error("Authentication required"));
+            }
+
+            log.debug("User {} joining community {}", userDetails.getId(), id);
             communityService.joinCommunity(id, userDetails.getId());
             return ResponseEntity.ok(ApiResponse.success("Successfully joined community", null));
+        } catch (IllegalStateException e) {
+            log.warn("User {} already member of community {}",
+                    userDetails != null ? userDetails.getId() : "null", id);
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body(ApiResponse.error("You are already a member of this community"));
         } catch (Exception e) {
-            log.error("Error joining community {} for user {}", id, userDetails.getId(), e);
+            log.error("Error joining community {} for user {}", id,
+                    userDetails != null ? userDetails.getId() : "null", e);
             return ResponseEntity.badRequest()
                     .body(ApiResponse.error("Failed to join community"));
         }
@@ -123,13 +152,37 @@ public class CommunityController {
             @PathVariable Long id,
             @AuthenticationPrincipal UserDetailsImpl userDetails) {
         try {
+            // Add null check for userDetails
+            if (userDetails == null) {
+                log.warn("UserDetails is null - user not authenticated");
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(ApiResponse.error("Authentication required"));
+            }
+
+            log.debug("User {} leaving community {}", userDetails.getId(), id);
             communityService.leaveCommunity(id, userDetails.getId());
             return ResponseEntity.ok(ApiResponse.success("Successfully left community", null));
         } catch (Exception e) {
-            log.error("Error leaving community {} for user {}", id, userDetails.getId(), e);
+            log.error("Error leaving community {} for user {}", id,
+                    userDetails != null ? userDetails.getId() : "null", e);
             return ResponseEntity.badRequest()
                     .body(ApiResponse.error("Failed to leave community"));
         }
+    }
+
+    @GetMapping("/auth-status")
+    public ResponseEntity<?> checkAuthStatus(@AuthenticationPrincipal UserDetailsImpl userDetails) {
+        if (userDetails == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.error("Not authenticated"));
+        }
+
+        return ResponseEntity.ok(ApiResponse.success("Authenticated",
+                Map.of(
+                        "userId", userDetails.getId(),
+                        "email", userDetails.getEmail(),
+                        "name", userDetails.getName()
+                )));
     }
 
     // ===== ADMIN ENDPOINTS =====

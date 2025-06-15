@@ -1,4 +1,4 @@
-// frontend/src/pages/Communities.jsx
+// frontend/src/pages/Communities.jsx - CLEAN VERSION
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
@@ -9,8 +9,8 @@ const Communities = () => {
     const [communities, setCommunities] = useState([]);
     const [myCommunities, setMyCommunities] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [actionLoading, setActionLoading] = useState(null); // Track which community is being processed
-    const [filter, setFilter] = useState('all'); // all, joined, available
+    const [actionLoading, setActionLoading] = useState(null);
+    const [filter, setFilter] = useState('all');
     const [alert, setAlert] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
 
@@ -23,20 +23,14 @@ const Communities = () => {
             setLoading(true);
             console.log('Loading communities from API...');
 
-            // Load all communities and my communities
             const [allCommunitiesResponse, myCommunitiesResponse] = await Promise.all([
                 authService.getCommunities().catch(() => ({ data: { success: false, data: [] } })),
                 user ? authService.getMyCommunities().catch(() => ({ data: { success: false, data: [] } })) : Promise.resolve({ data: { success: true, data: [] } })
             ]);
 
-            console.log('Communities API Response:', allCommunitiesResponse);
-            console.log('My Communities API Response:', myCommunitiesResponse);
-
-            // Handle backend ApiResponse format: { success: true, message: "...", data: [...] }
             let communitiesData = [];
             let myCommunitiesData = [];
 
-            // Extract communities data from response
             if (allCommunitiesResponse.data) {
                 if (allCommunitiesResponse.data.success && Array.isArray(allCommunitiesResponse.data.data)) {
                     communitiesData = allCommunitiesResponse.data.data;
@@ -45,7 +39,6 @@ const Communities = () => {
                 }
             }
 
-            // Extract my communities data from response
             if (myCommunitiesResponse.data) {
                 if (myCommunitiesResponse.data.success && Array.isArray(myCommunitiesResponse.data.data)) {
                     myCommunitiesData = myCommunitiesResponse.data.data;
@@ -57,39 +50,13 @@ const Communities = () => {
             setCommunities(communitiesData);
             setMyCommunities(myCommunitiesData);
 
-            console.log('Set communities:', communitiesData);
-            console.log('Set my communities:', myCommunitiesData);
-
         } catch (error) {
             console.error('Error loading communities:', error);
-
-            // Show error alert
             setAlert({
                 type: 'error',
                 message: 'Failed to load communities from server. Please check your connection.'
             });
-
-            // Use demo data if API fails
-            setCommunities([
-                {
-                    communityId: 1,
-                    name: "Technology Enthusiasts",
-                    description: "Community for technology lovers and professionals to share ideas and collaborate on cutting-edge projects",
-                    memberCount: 0
-                },
-                {
-                    communityId: 2,
-                    name: "Academic Research",
-                    description: "Connect with fellow researchers, share findings, and collaborate on academic projects across various disciplines",
-                    memberCount: 0
-                },
-                {
-                    communityId: 3,
-                    name: "Student Organizations",
-                    description: "A platform for various student organizations to network and share activities",
-                    memberCount: 0
-                }
-            ]);
+            setCommunities([]);
             setMyCommunities([]);
         } finally {
             setLoading(false);
@@ -104,21 +71,12 @@ const Communities = () => {
 
         try {
             setActionLoading(communityId);
-            console.log('Joining community:', communityId);
-
             await authService.joinCommunity(communityId);
-
             setAlert({ type: 'success', message: 'Successfully joined the community!' });
-
-            // Reload data to reflect changes
             await loadCommunities();
-
         } catch (error) {
             console.error('Error joining community:', error);
-
             let errorMessage = 'Failed to join community. Please try again.';
-
-            // Handle specific error messages
             if (error.response?.data?.message) {
                 errorMessage = error.response.data.message;
             } else if (error.response?.status === 401) {
@@ -126,7 +84,6 @@ const Communities = () => {
             } else if (error.response?.status === 409) {
                 errorMessage = 'You are already a member of this community.';
             }
-
             setAlert({ type: 'error', message: errorMessage });
         } finally {
             setActionLoading(null);
@@ -141,50 +98,32 @@ const Communities = () => {
 
         try {
             setActionLoading(communityId);
-            console.log('Leaving community:', communityId);
-
             await authService.leaveCommunity(communityId);
-
             setAlert({ type: 'success', message: 'Successfully left the community!' });
-
-            // Reload data to reflect changes
             await loadCommunities();
-
         } catch (error) {
             console.error('Error leaving community:', error);
-
             let errorMessage = 'Failed to leave community. Please try again.';
-
-            // Handle specific error messages
             if (error.response?.data?.message) {
                 errorMessage = error.response.data.message;
-            } else if (error.response?.status === 401) {
-                errorMessage = 'Please login first.';
-            } else if (error.response?.status === 404) {
-                errorMessage = 'You are not a member of this community.';
             }
-
             setAlert({ type: 'error', message: errorMessage });
         } finally {
             setActionLoading(null);
         }
     };
 
-    // Helper functions
     const isJoined = (communityId) => {
         return Array.isArray(myCommunities) && myCommunities.some(community => community.communityId === communityId);
     };
 
-    // Filter and search communities safely
     const getFilteredCommunities = () => {
         if (!Array.isArray(communities)) {
-            console.warn('Communities is not an array:', communities);
             return [];
         }
 
         let filtered = communities;
 
-        // Apply filter
         switch (filter) {
             case 'joined':
                 filtered = communities.filter(community => isJoined(community.communityId));
@@ -196,7 +135,6 @@ const Communities = () => {
                 filtered = communities;
         }
 
-        // Apply search
         if (searchTerm.trim()) {
             filtered = filtered.filter(community =>
                 community.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -209,7 +147,6 @@ const Communities = () => {
 
     const filteredCommunities = getFilteredCommunities();
 
-    // Auto-hide alerts after 5 seconds
     useEffect(() => {
         if (alert) {
             const timer = setTimeout(() => {
@@ -260,7 +197,7 @@ const Communities = () => {
                 {/* Alert */}
                 {alert && (
                     <div className={`alert alert-${alert.type}`}>
-                        <i className={`fas ${alert.type === 'success' ? 'fa-check-circle' : alert.type === 'error' ? 'fa-exclamation-triangle' : 'fa-info-circle'}`}></i>
+                        <i className={`fas ${alert.type === 'success' ? 'fa-check-circle' : 'fa-exclamation-triangle'}`}></i>
                         {alert.message}
                         <button className="alert-close" onClick={() => setAlert(null)}>×</button>
                     </div>
@@ -324,15 +261,6 @@ const Communities = () => {
                                     "No communities available. This might be due to a connection issue."
                                 )}
                             </p>
-                            {filter === 'joined' && (
-                                <button
-                                    className="btn btn-primary"
-                                    onClick={() => setFilter('available')}
-                                >
-                                    <i className="fas fa-search"></i>
-                                    Discover Communities
-                                </button>
-                            )}
                         </div>
                     ) : (
                         filteredCommunities.map((community) => {
