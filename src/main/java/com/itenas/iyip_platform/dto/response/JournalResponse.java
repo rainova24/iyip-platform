@@ -11,7 +11,7 @@ public class JournalResponse {
     private String title;
     private String content;
     private String thumbnailUrl;
-    private Boolean isPublic;
+    private Boolean isPublic; // true = public, false = private
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

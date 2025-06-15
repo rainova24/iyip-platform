@@ -13,7 +13,7 @@ public class CreateJournalRequest {
     @Size(max = 10000, message = "Content must be max 10000 characters")
     private String content;
 
-    private String thumbnailUrl;
+    private String thumbnailUrl; // Optional image/thumbnail for journal
 
-    private Boolean isPublic = false;
+    private Boolean isPublic = false; // Default private, user can choose to make public
 }

@@ -13,5 +13,5 @@ public class UpdateJournalRequest {
     private String content;
 
     private String thumbnailUrl;
-    private Boolean isPublic;
+    private Boolean isPublic; // User can toggle public/private
 }
