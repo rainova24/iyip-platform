@@ -9,8 +9,10 @@ const Communities = () => {
     const [communities, setCommunities] = useState([]);
     const [myCommunities, setMyCommunities] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [actionLoading, setActionLoading] = useState(null); // Track which community is being processed
     const [filter, setFilter] = useState('all'); // all, joined, available
     const [alert, setAlert] = useState(null);
+    const [searchTerm, setSearchTerm] = useState('');
 
     useEffect(() => {
         loadCommunities();
@@ -23,22 +25,41 @@ const Communities = () => {
 
             // Load all communities and my communities
             const [allCommunitiesResponse, myCommunitiesResponse] = await Promise.all([
-                authService.getCommunities(),
-                authService.getMyCommunities().catch(() => ({ data: [] }))
+                authService.getCommunities().catch(() => ({ data: { success: false, data: [] } })),
+                user ? authService.getMyCommunities().catch(() => ({ data: { success: false, data: [] } })) : Promise.resolve({ data: { success: true, data: [] } })
             ]);
 
             console.log('Communities API Response:', allCommunitiesResponse);
             console.log('My Communities API Response:', myCommunitiesResponse);
 
-            // Set communities from API response
-            const communitiesData = allCommunitiesResponse.data || allCommunitiesResponse || [];
-            const myCommunitiesData = myCommunitiesResponse.data || myCommunitiesResponse || [];
+            // Handle backend ApiResponse format: { success: true, message: "...", data: [...] }
+            let communitiesData = [];
+            let myCommunitiesData = [];
+
+            // Extract communities data from response
+            if (allCommunitiesResponse.data) {
+                if (allCommunitiesResponse.data.success && Array.isArray(allCommunitiesResponse.data.data)) {
+                    communitiesData = allCommunitiesResponse.data.data;
+                } else if (Array.isArray(allCommunitiesResponse.data)) {
+                    communitiesData = allCommunitiesResponse.data;
+                }
+            }
+
+            // Extract my communities data from response
+            if (myCommunitiesResponse.data) {
+                if (myCommunitiesResponse.data.success && Array.isArray(myCommunitiesResponse.data.data)) {
+                    myCommunitiesData = myCommunitiesResponse.data.data;
+                } else if (Array.isArray(myCommunitiesResponse.data)) {
+                    myCommunitiesData = myCommunitiesResponse.data;
+                }
+            }
 
             setCommunities(communitiesData);
             setMyCommunities(myCommunitiesData);
 
             console.log('Set communities:', communitiesData);
             console.log('Set my communities:', myCommunitiesData);
+
         } catch (error) {
             console.error('Error loading communities:', error);
 
@@ -48,8 +69,27 @@ const Communities = () => {
                 message: 'Failed to load communities from server. Please check your connection.'
             });
 
-            // Keep empty arrays to show empty state
-            setCommunities([]);
+            // Use demo data if API fails
+            setCommunities([
+                {
+                    communityId: 1,
+                    name: "Technology Enthusiasts",
+                    description: "Community for technology lovers and professionals to share ideas and collaborate on cutting-edge projects",
+                    memberCount: 0
+                },
+                {
+                    communityId: 2,
+                    name: "Academic Research",
+                    description: "Connect with fellow researchers, share findings, and collaborate on academic projects across various disciplines",
+                    memberCount: 0
+                },
+                {
+                    communityId: 3,
+                    name: "Student Organizations",
+                    description: "A platform for various student organizations to network and share activities",
+                    memberCount: 0
+                }
+            ]);
             setMyCommunities([]);
         } finally {
             setLoading(false);
@@ -57,74 +97,127 @@ const Communities = () => {
     };
 
     const handleJoinCommunity = async (communityId) => {
+        if (!user) {
+            setAlert({ type: 'error', message: 'Please login to join communities.' });
+            return;
+        }
+
         try {
+            setActionLoading(communityId);
             console.log('Joining community:', communityId);
+
             await authService.joinCommunity(communityId);
+
             setAlert({ type: 'success', message: 'Successfully joined the community!' });
-            loadCommunities(); // Reload to update join status
+
+            // Reload data to reflect changes
+            await loadCommunities();
+
         } catch (error) {
             console.error('Error joining community:', error);
-            setAlert({ type: 'error', message: 'Failed to join community. Please try again.' });
+
+            let errorMessage = 'Failed to join community. Please try again.';
+
+            // Handle specific error messages
+            if (error.response?.data?.message) {
+                errorMessage = error.response.data.message;
+            } else if (error.response?.status === 401) {
+                errorMessage = 'Please login to join communities.';
+            } else if (error.response?.status === 409) {
+                errorMessage = 'You are already a member of this community.';
+            }
+
+            setAlert({ type: 'error', message: errorMessage });
+        } finally {
+            setActionLoading(null);
         }
     };
 
     const handleLeaveCommunity = async (communityId) => {
+        if (!user) {
+            setAlert({ type: 'error', message: 'Please login first.' });
+            return;
+        }
+
         try {
+            setActionLoading(communityId);
             console.log('Leaving community:', communityId);
+
             await authService.leaveCommunity(communityId);
+
             setAlert({ type: 'success', message: 'Successfully left the community!' });
-            loadCommunities(); // Reload to update join status
+
+            // Reload data to reflect changes
+            await loadCommunities();
+
         } catch (error) {
             console.error('Error leaving community:', error);
-            setAlert({ type: 'error', message: 'Failed to leave community. Please try again.' });
+
+            let errorMessage = 'Failed to leave community. Please try again.';
+
+            // Handle specific error messages
+            if (error.response?.data?.message) {
+                errorMessage = error.response.data.message;
+            } else if (error.response?.status === 401) {
+                errorMessage = 'Please login first.';
+            } else if (error.response?.status === 404) {
+                errorMessage = 'You are not a member of this community.';
+            }
+
+            setAlert({ type: 'error', message: errorMessage });
+        } finally {
+            setActionLoading(null);
         }
     };
 
-    const handleCreateCommunity = () => {
-        // For now, show info message
-        setAlert({ type: 'info', message: 'Create community functionality will be implemented soon!' });
-    };
-
-    const formatDate = (dateString) => {
-        const date = new Date(dateString);
-        return date.toLocaleDateString('en-US', {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric'
-        });
-    };
-
+    // Helper functions
     const isJoined = (communityId) => {
-        return myCommunities.some(community =>
-            community.communityId === communityId || community.id === communityId
-        );
+        return Array.isArray(myCommunities) && myCommunities.some(community => community.communityId === communityId);
     };
 
-    const getCommunityIcon = (name) => {
-        // Determine icon based on community name/category
-        if (name?.toLowerCase().includes('technology') || name?.toLowerCase().includes('tech')) {
-            return 'fas fa-laptop-code';
-        } else if (name?.toLowerCase().includes('research') || name?.toLowerCase().includes('academic')) {
-            return 'fas fa-microscope';
-        } else if (name?.toLowerCase().includes('student') || name?.toLowerCase().includes('education')) {
-            return 'fas fa-graduation-cap';
-        } else if (name?.toLowerCase().includes('arts') || name?.toLowerCase().includes('creative')) {
-            return 'fas fa-palette';
-        } else {
-            return 'fas fa-users';
+    // Filter and search communities safely
+    const getFilteredCommunities = () => {
+        if (!Array.isArray(communities)) {
+            console.warn('Communities is not an array:', communities);
+            return [];
         }
-    };
 
-    const filteredCommunities = communities.filter(community => {
+        let filtered = communities;
+
+        // Apply filter
         switch (filter) {
             case 'joined':
-                return isJoined(community.communityId || community.id);
+                filtered = communities.filter(community => isJoined(community.communityId));
+                break;
             case 'available':
-                return !isJoined(community.communityId || community.id);
+                filtered = communities.filter(community => !isJoined(community.communityId));
+                break;
             default:
-                return true;
+                filtered = communities;
         }
-    });
+
+        // Apply search
+        if (searchTerm.trim()) {
+            filtered = filtered.filter(community =>
+                community.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                community.description?.toLowerCase().includes(searchTerm.toLowerCase())
+            );
+        }
+
+        return filtered;
+    };
+
+    const filteredCommunities = getFilteredCommunities();
+
+    // Auto-hide alerts after 5 seconds
+    useEffect(() => {
+        if (alert) {
+            const timer = setTimeout(() => {
+                setAlert(null);
+            }, 5000);
+            return () => clearTimeout(timer);
+        }
+    }, [alert]);
 
     if (loading) {
         return (
@@ -132,7 +225,7 @@ const Communities = () => {
                 <div className="communities-container">
                     <div className="loading-state">
                         <div className="loading-spinner"></div>
-                        <p>Loading communities from database...</p>
+                        <p>Loading communities...</p>
                     </div>
                 </div>
             </div>
@@ -146,35 +239,21 @@ const Communities = () => {
                 <div className="communities-header">
                     <div className="header-content">
                         <h1>Communities</h1>
-                        <p>Connect with like-minded individuals and join vibrant communities</p>
+                        <p>Connect with like-minded individuals and grow your network</p>
                     </div>
-                    <div className="header-actions">
-                        <button className="btn btn-primary" onClick={handleCreateCommunity}>
-                            <i className="fas fa-plus"></i>
-                            Create Community
-                        </button>
-                    </div>
-                </div>
-
-                {/* Stats */}
-                <div className="communities-stats">
-                    <div className="stat-item">
-                        <span className="stat-number">{communities.length}</span>
-                        <span className="stat-label">Total Communities</span>
-                    </div>
-                    <div className="stat-item">
-                        <span className="stat-number">{myCommunities.length}</span>
-                        <span className="stat-label">Joined</span>
-                    </div>
-                    <div className="stat-item">
-                        <span className="stat-number">
-                            {communities.reduce((sum, c) => sum + (c.memberCount || 0), 0)}
-                        </span>
-                        <span className="stat-label">Total Members</span>
-                    </div>
-                    <div className="stat-item">
-                        <span className="stat-number">{communities.filter(c => c.isActive !== false).length}</span>
-                        <span className="stat-label">Active Communities</span>
+                    <div className="header-stats">
+                        <div className="stat-item">
+                            <span className="stat-number">{communities.length}</span>
+                            <span className="stat-label">Total Communities</span>
+                        </div>
+                        <div className="stat-item">
+                            <span className="stat-number">{myCommunities.length}</span>
+                            <span className="stat-label">Joined</span>
+                        </div>
+                        <div className="stat-item">
+                            <span className="stat-number">{Math.max(0, communities.length - myCommunities.length)}</span>
+                            <span className="stat-label">Available</span>
+                        </div>
                     </div>
                 </div>
 
@@ -209,7 +288,7 @@ const Communities = () => {
                             onClick={() => setFilter('available')}
                         >
                             <i className="fas fa-search"></i>
-                            Discover ({communities.length - myCommunities.length})
+                            Discover ({Math.max(0, communities.length - myCommunities.length)})
                         </button>
                     </div>
                     <div className="search-box">
@@ -217,30 +296,14 @@ const Communities = () => {
                             type="text"
                             placeholder="Search communities..."
                             className="search-input"
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
                         />
                         <button className="search-btn">
                             <i className="fas fa-search"></i>
                         </button>
                     </div>
                 </div>
-
-                {/* Debug Info - Remove this in production */}
-                {process.env.NODE_ENV === 'development' && (
-                    <div style={{
-                        background: '#f8f9fa',
-                        padding: '1rem',
-                        borderRadius: '8px',
-                        marginBottom: '2rem',
-                        fontSize: '14px',
-                        fontFamily: 'monospace'
-                    }}>
-                        <strong>Debug Info:</strong><br/>
-                        Total Communities: {communities.length}<br/>
-                        My Communities: {myCommunities.length}<br/>
-                        Filtered Communities: {filteredCommunities.length}<br/>
-                        API Base URL: {process.env.REACT_APP_API_URL || 'http://localhost:8080/api'}
-                    </div>
-                )}
 
                 {/* Communities Grid */}
                 <div className="communities-grid">
@@ -251,99 +314,118 @@ const Communities = () => {
                             </div>
                             <h3>No communities found</h3>
                             <p>
-                                {filter === 'joined'
-                                    ? "You haven't joined any communities yet."
-                                    : filter === 'available'
-                                        ? "No available communities to join at the moment."
-                                        : "No communities available. This might be due to a connection issue."
-                                }
+                                {searchTerm ? (
+                                    `No communities match "${searchTerm}". Try a different search term.`
+                                ) : filter === 'joined' ? (
+                                    "You haven't joined any communities yet. Discover communities to join!"
+                                ) : filter === 'available' ? (
+                                    "No available communities to join at the moment."
+                                ) : (
+                                    "No communities available. This might be due to a connection issue."
+                                )}
                             </p>
-                            {filter !== 'joined' && (
-                                <button className="btn btn-primary" onClick={handleCreateCommunity}>
-                                    Create New Community
+                            {filter === 'joined' && (
+                                <button
+                                    className="btn btn-primary"
+                                    onClick={() => setFilter('available')}
+                                >
+                                    <i className="fas fa-search"></i>
+                                    Discover Communities
                                 </button>
                             )}
-                            <p style={{ marginTop: '1rem', fontSize: '0.9rem', color: '#666' }}>
-                                If you're seeing this, please check:
-                                <br/>• Backend server is running on localhost:8080
-                                <br/>• Database has community data
-                                <br/>• Network connection is working
-                            </p>
                         </div>
                     ) : (
-                        filteredCommunities.map(community => {
-                            const communityId = community.communityId || community.id;
-                            const joined = isJoined(communityId);
+                        filteredCommunities.map((community) => {
+                            const joined = isJoined(community.communityId);
+                            const isProcessing = actionLoading === community.communityId;
 
                             return (
-                                <div key={communityId} className={`community-card ${joined ? 'joined' : ''}`}>
+                                <div key={community.communityId} className={`community-card ${joined ? 'joined' : 'available'}`}>
                                     <div className="community-card-header">
-                                        <div className="community-icon">
-                                            <i className={getCommunityIcon(community.name)}></i>
-                                        </div>
-                                        <div className="community-badges">
+                                        <div className="community-status">
                                             {joined && (
-                                                <span className="badge badge-joined">
-                                                    <i className="fas fa-check"></i>
+                                                <span className="joined-badge">
+                                                    <i className="fas fa-check-circle"></i>
                                                     Joined
                                                 </span>
                                             )}
-                                            <span className="badge badge-active">
-                                                <i className="fas fa-circle"></i>
-                                                Active
-                                            </span>
                                         </div>
+                                        <h3 className="community-title">{community.name}</h3>
+                                        <p className="community-description">{community.description}</p>
                                     </div>
 
-                                    <div className="community-card-content">
-                                        <h3 className="community-name">{community.name}</h3>
-                                        <p className="community-description">
-                                            {community.description || 'No description available.'}
-                                        </p>
-
+                                    <div className="community-card-body">
                                         <div className="community-stats">
                                             <div className="stat-item">
                                                 <i className="fas fa-users"></i>
                                                 <span>{community.memberCount || 0} members</span>
                                             </div>
-                                            <div className="stat-item">
-                                                <i className="fas fa-calendar"></i>
-                                                <span>
-                                                    Since {community.createdAt ? formatDate(community.createdAt) : 'Unknown'}
-                                                </span>
-                                            </div>
+                                            {joined && (
+                                                <div className="stat-item">
+                                                    <i className="fas fa-calendar"></i>
+                                                    <span>Active member</span>
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
 
                                     <div className="community-card-actions">
                                         <Link
-                                            to={`/communities/${communityId}`}
+                                            to={`/communities/${community.communityId}`}
                                             className="btn btn-outline btn-sm"
                                         >
                                             <i className="fas fa-eye"></i>
                                             View Details
                                         </Link>
 
-                                        {user && (
+                                        {user ? (
                                             <>
                                                 {joined ? (
                                                     <button
                                                         className="btn btn-secondary btn-sm"
-                                                        onClick={() => handleLeaveCommunity(communityId)}
+                                                        onClick={() => handleLeaveCommunity(community.communityId)}
+                                                        disabled={isProcessing}
                                                     >
-                                                        <i className="fas fa-sign-out-alt"></i>
-                                                        Leave
+                                                        {isProcessing ? (
+                                                            <>
+                                                                <i className="fas fa-spinner fa-spin"></i>
+                                                                Leaving...
+                                                            </>
+                                                        ) : (
+                                                            <>
+                                                                <i className="fas fa-times"></i>
+                                                                Leave
+                                                            </>
+                                                        )}
                                                     </button>
                                                 ) : (
                                                     <button
                                                         className="btn btn-primary btn-sm"
-                                                        onClick={() => handleJoinCommunity(communityId)}
+                                                        onClick={() => handleJoinCommunity(community.communityId)}
+                                                        disabled={isProcessing}
                                                     >
-                                                        <i className="fas fa-plus"></i>
-                                                        Join
+                                                        {isProcessing ? (
+                                                            <>
+                                                                <i className="fas fa-spinner fa-spin"></i>
+                                                                Joining...
+                                                            </>
+                                                        ) : (
+                                                            <>
+                                                                <i className="fas fa-plus"></i>
+                                                                Join
+                                                            </>
+                                                        )}
                                                     </button>
                                                 )}
                                             </>
+                                        ) : (
+                                            <Link
+                                                to="/login"
+                                                className="btn btn-primary btn-sm"
+                                            >
+                                                <i className="fas fa-sign-in-alt"></i>
+                                                Login to Join
+                                            </Link>
                                         )}
                                     </div>
                                 </div>
