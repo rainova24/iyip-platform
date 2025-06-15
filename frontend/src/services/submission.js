@@ -1,4 +1,4 @@
-// frontend/src/services/submission.js
+// File lengkap: frontend/src/services/submission.js
 import api from './api';
 
 // Journal Service
@@ -79,8 +79,9 @@ export const submissionService = {
         return response.data;
     },
 
+    // FIX: Kirim status sebagai query parameter, bukan JSON body
     updateSubmissionStatus: async (id, status) => {
-        const response = await api.put(`/submissions/${id}/status`, { status });
+        const response = await api.put(`/submissions/${id}/status?status=${status}`);
         return response.data;
     }
 };

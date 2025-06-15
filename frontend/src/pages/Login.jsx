@@ -285,7 +285,8 @@ const Login = () => {
                             padding: '1rem',
                             fontSize: '1.1rem',
                             fontWeight: '600',
-                            marginBottom: '1.5rem'
+                            marginBottom: '1.5rem',
+                            border: '1px solid #FFF4F0'
                         }}
                     >
                         {loading ? (
@@ -308,7 +309,7 @@ const Login = () => {
                     <div style={{ textAlign: 'center' }}>
                         <p style={{
                             color: "rgba(26,26,26,1)",
-                            marginBottom: '1rem' 
+                            marginBottom: '1rem'
                         }}>
                             Don't have an account?
                         </p>
@@ -318,8 +319,11 @@ const Login = () => {
                             style={{
                                 width: '100%',
                                 padding: '1rem',
+                                color: 'black',
                                 fontSize: '1.1rem',
-                                fontWeight: '600'
+                                fontWeight: '600',
+                                border: '1px solid #000000'
+
                             }}
                         >
                             <i className="fas fa-user-plus"></i>
@@ -333,10 +337,10 @@ const Login = () => {
                     textAlign: 'center',
                     marginTop: '2rem',
                     paddingTop: '1.5rem',
-                    borderTop: '1px solid var(--border-color)'
+                    borderTop: '1px solid black'
                 }}>
                     <p style={{ 
-                        color: 'var(--text-light)', 
+                        color: 'black',
                         fontSize: '0.9rem',
                         margin: '0'
                     }}>

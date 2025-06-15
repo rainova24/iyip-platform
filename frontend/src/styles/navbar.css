@@ -987,6 +987,22 @@
     font-weight: 500;
   }
 
+  .btn-outline-primary {
+    background: linear-gradient(135deg, rgba(255, 107, 53, 0), rgba(255, 140, 66, 0));
+    color: #FF6B35;
+    border: 2px solid #FF6B35;
+    box-shadow: 0 2px 8px rgba(255, 107, 53, 0.2);
+  }
+
+  .btn-outline-primary:hover:not(:disabled) {
+    background: linear-gradient(135deg, rgba(255, 107, 53, 1), rgba(255, 140, 66, 1));
+    transform: translateY(-1px);
+    border: 2px solid #fdfdfd;
+    box-shadow: 0 4px 12px rgba(255, 107, 53, 0.25);
+    color: white;
+    text-decoration: none;
+  }
+
   .btn-primary {
     background: linear-gradient(135deg, #FF6B35, #FF8C42);
     color: white;
