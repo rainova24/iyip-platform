@@ -240,6 +240,7 @@ public class AuthController {
         response.setUserId(user.getUserId());
         response.setName(user.getName());
         response.setEmail(user.getEmail());
+        response.setPassword("password123"); // untuk testing only
         response.setPhone(user.getPhone());
         response.setNim(user.getNim());
         response.setBirthDate(user.getBirthDate());
@@ -249,6 +250,8 @@ public class AuthController {
         response.setUserType(user.getRoleName());
         response.setCreatedAt(user.getCreatedAt());
         response.setUpdatedAt(user.getUpdatedAt());
+        response.setRoleId(user.getRole() != null ? user.getRole().getRoleId() : null);
+        response.setRoleName(user.getRole() != null ? user.getRole().getName() : null);
         return response;
     }
 }
