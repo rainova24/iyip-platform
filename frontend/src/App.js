@@ -18,6 +18,7 @@ import Submissions from './pages/Submissions';
 import SubmissionDetail from './pages/SubmissionDetail';
 import Communities from './pages/Communities';
 import UserInfo from './pages/UserInfo';
+import UserManagement from './pages/UserManagement';
 
 // Auth Context
 import { AuthProvider, useAuth } from './contexts/AuthContext';
@@ -28,13 +29,28 @@ const ProtectedRoute = ({ children }) => {
     return isAuthenticated ? children : <Navigate to="/login" />;
 };
 
+// Admin Only Route Component
+const AdminRoute = ({ children }) => {
+    const { isAuthenticated, user } = useAuth();
+
+    if (!isAuthenticated) {
+        return <Navigate to="/login" />;
+    }
+
+    if (user?.roleName !== 'ADMIN') {
+        return <Navigate to="/dashboard" />;
+    }
+
+    return children;
+};
+
 function AppContent() {
     const { isAuthenticated } = useAuth();
 
     return (
         <div className="App">
-            {/* Only show Navbar for authenticated users or on Home page */}
             <Routes>
+                {/* Public Routes */}
                 <Route
                     path="/"
                     element={
@@ -124,6 +140,17 @@ function AppContent() {
                             <Navbar />
                             <UserInfo />
                         </ProtectedRoute>
+                    }
+                />
+
+                {/* Admin Only Routes */}
+                <Route
+                    path="/admin/users"
+                    element={
+                        <AdminRoute>
+                            <Navbar />
+                            <UserManagement />
+                        </AdminRoute>
                     }
                 />
 
