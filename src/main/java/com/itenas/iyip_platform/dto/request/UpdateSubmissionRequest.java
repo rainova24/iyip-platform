@@ -15,6 +15,6 @@ public class UpdateSubmissionRequest {
 
     private String fileUrl;
 
-    // Only admin can update status
+    // Only admin can update status via separate endpoint
     private Submission.SubmissionStatus status;
 }

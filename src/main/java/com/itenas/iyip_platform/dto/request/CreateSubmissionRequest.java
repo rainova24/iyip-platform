@@ -8,7 +8,7 @@ import lombok.Data;
 public class CreateSubmissionRequest {
 
     @NotNull(message = "Type is required")
-    private Submission.SubmissionType type;
+    private Submission.SubmissionType type; // MATERIAL or FASILITAS
 
     @NotBlank(message = "Title is required")
     @Size(max = 150, message = "Title must be max 150 characters")
@@ -17,5 +17,5 @@ public class CreateSubmissionRequest {
     @Size(max = 5000, message = "Content must be max 5000 characters")
     private String content;
 
-    private String fileUrl;
+    private String fileUrl; // Optional file attachment
 }

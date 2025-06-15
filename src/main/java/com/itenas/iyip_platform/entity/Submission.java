@@ -58,8 +58,8 @@ public class Submission extends BaseEntity {
     }
 
     public enum SubmissionType {
-        MATERIAL("Material"),
-        FASILITAS("Fasilitas");
+        MATERIAL("Material"),      // Research papers, documents, academic materials
+        FASILITAS("Fasilitas");   // Facility requests, equipment, infrastructure
 
         private final String displayName;
 
@@ -73,9 +73,9 @@ public class Submission extends BaseEntity {
     }
 
     public enum SubmissionStatus {
-        PENDING("Pending"),
-        APPROVED("Approved"),
-        REJECTED("Rejected");
+        PENDING("Pending"),       // Waiting for admin review
+        APPROVED("Approved"),     // Approved by admin
+        REJECTED("Rejected");     // Rejected by admin
 
         private final String displayName;
 
