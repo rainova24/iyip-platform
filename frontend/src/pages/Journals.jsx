@@ -2,15 +2,18 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import authService from '../services/authService';
+import { journalService } from '../services/submission';
 
 const Journals = () => {
-    const { user } = useAuth();
     const [journals, setJournals] = useState([]);
     const [myJournals, setMyJournals] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [filter, setFilter] = useState('all'); // all, public, my-journals
+    const [error, setError] = useState(null);
     const [alert, setAlert] = useState(null);
+    const [filter, setFilter] = useState('all');
+    const [searchTerm, setSearchTerm] = useState('');
+
+    const { user } = useAuth();
 
     useEffect(() => {
         loadJournals();
@@ -19,102 +22,92 @@ const Journals = () => {
     const loadJournals = async () => {
         try {
             setLoading(true);
+            setError(null);
 
-            // Load all journals and my journals
-            const [allJournalsResponse, myJournalsResponse] = await Promise.all([
-                authService.getJournals().catch(() => ({ data: [] })),
-                authService.getMyJournals().catch(() => ({ data: [] }))
+            // Load public journals and user's journals
+            const [publicResponse, myJournalsResponse] = await Promise.all([
+                journalService.getPublicJournals().catch(() => ({ data: [] })),
+                user ? journalService.getUserJournals().catch(() => ({ data: [] })) : Promise.resolve({ data: [] })
             ]);
 
-            setJournals(allJournalsResponse.data || []);
-            setMyJournals(myJournalsResponse.data || []);
+            // Ensure we have arrays
+            const publicJournals = Array.isArray(publicResponse?.data) ? publicResponse.data : [];
+            const userJournals = Array.isArray(myJournalsResponse?.data) ? myJournalsResponse.data : [];
+
+            setJournals(publicJournals);
+            setMyJournals(userJournals);
         } catch (error) {
             console.error('Error loading journals:', error);
-            // Use demo data if API fails
-            setJournals([
-                {
-                    journalId: 1,
-                    title: "AI in Healthcare: A Comprehensive Study",
-                    content: "This research explores the application of artificial intelligence in modern healthcare systems...",
-                    author: "Dr. Sarah Johnson",
-                    isPublic: true,
-                    createdAt: "2025-05-15T10:30:00Z",
-                    views: 1250,
-                    citations: 15
-                },
-                {
-                    journalId: 2,
-                    title: "Blockchain Technology for Secure Transactions",
-                    content: "An in-depth analysis of blockchain implementation in financial systems...",
-                    author: "Prof. Michael Chen",
-                    isPublic: true,
-                    createdAt: "2025-04-22T14:15:00Z",
-                    views: 890,
-                    citations: 8
-                },
-                {
-                    journalId: 3,
-                    title: "Sustainable Energy Solutions for Smart Cities",
-                    content: "Research on renewable energy integration in urban planning...",
-                    author: "Dr. Emily Davis",
-                    isPublic: true,
-                    createdAt: "2025-03-10T09:45:00Z",
-                    views: 2100,
-                    citations: 23
-                },
-                {
-                    journalId: 4,
-                    title: "Machine Learning Applications in Education",
-                    content: "Exploring how ML can enhance personalized learning experiences...",
-                    author: "Prof. David Wilson",
-                    isPublic: false,
-                    createdAt: "2025-02-28T16:20:00Z",
-                    views: 450,
-                    citations: 5
-                }
-            ]);
+            setError('Failed to load journals');
+            // Set empty arrays as fallback
+            setJournals([]);
+            setMyJournals([]);
         } finally {
             setLoading(false);
         }
-    };
-
-    const handleCreateJournal = () => {
-        // Redirect to create journal page or open modal
-        setAlert({ type: 'info', message: 'Create journal functionality will be implemented soon!' });
-    };
-
-    const formatDate = (dateString) => {
-        const date = new Date(dateString);
-        return date.toLocaleDateString('en-US', {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric'
-        });
     };
 
     const isMyJournal = (journalId) => {
         return myJournals.some(journal => journal.journalId === journalId);
     };
 
-    const filteredJournals = journals.filter(journal => {
-        switch (filter) {
-            case 'public':
-                return journal.isPublic;
-            case 'my-journals':
-                return isMyJournal(journal.journalId);
-            default:
-                return true;
+    const getFilteredJournals = () => {
+        let filtered = [];
+
+        if (filter === 'all') {
+            // Combine public journals and user's private journals
+            const allJournals = [...journals, ...myJournals.filter(j => !j.isPublic)];
+            // Remove duplicates based on journalId
+            const uniqueJournals = allJournals.reduce((acc, current) => {
+                const existing = acc.find(item => item.journalId === current.journalId);
+                if (!existing) {
+                    acc.push(current);
+                }
+                return acc;
+            }, []);
+            filtered = uniqueJournals;
+        } else if (filter === 'public') {
+            filtered = journals.filter(journal => journal.isPublic);
+        } else if (filter === 'my-journals') {
+            filtered = myJournals;
         }
-    });
+
+        // Apply search filter
+        if (searchTerm) {
+            filtered = filtered.filter(journal =>
+                journal.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                journal.content?.toLowerCase().includes(searchTerm.toLowerCase())
+            );
+        }
+
+        return filtered;
+    };
+
+    const filteredJournals = getFilteredJournals();
+
+    const formatDate = (dateString) => {
+        if (!dateString) return 'Unknown date';
+        return new Date(dateString).toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric'
+        });
+    };
+
+    const handleCreateJournal = () => {
+        // Navigate to create journal page or show form
+        setAlert({ type: 'info', message: 'Create journal feature coming soon!' });
+        setTimeout(() => setAlert(null), 3000);
+    };
 
     if (loading) {
         return (
-            <div className="journals-page">
-                <div className="journals-container">
-                    <div className="loading-state">
-                        <div className="loading-spinner"></div>
-                        <p>Loading journals...</p>
+            <div className="container mt-4">
+                <div className="text-center">
+                    <div className="spinner-border text-primary" role="status">
+                        <span className="visually-hidden">Loading...</span>
                     </div>
+                    <p className="mt-3">Loading journals...</p>
                 </div>
             </div>
         );
@@ -126,21 +119,24 @@ const Journals = () => {
                 {/* Header */}
                 <div className="journals-header">
                     <div className="header-content">
-                        <h1>Academic Journals</h1>
-                        <p>Discover research papers, publications, and academic resources</p>
+                        <h1>
+                            <i className="fas fa-book-open"></i>
+                            Research Journals
+                        </h1>
+                        <p>Discover and share cutting-edge research findings</p>
                     </div>
                     <div className="header-actions">
                         <button className="btn btn-primary" onClick={handleCreateJournal}>
                             <i className="fas fa-plus"></i>
-                            Create New Journal
+                            Create Journal
                         </button>
                     </div>
                 </div>
 
-                {/* Stats */}
+                {/* Statistics */}
                 <div className="journals-stats">
                     <div className="stat-item">
-                        <span className="stat-number">{journals.length}</span>
+                        <span className="stat-number">{journals.length + myJournals.length}</span>
                         <span className="stat-label">Total Journals</span>
                     </div>
                     <div className="stat-item">
@@ -159,10 +155,19 @@ const Journals = () => {
 
                 {/* Alert */}
                 {alert && (
-                    <div className={`alert alert-${alert.type}`}>
+                    <div className={`alert alert-${alert.type === 'error' ? 'danger' : alert.type} alert-dismissible fade show`}>
                         <i className={`fas ${alert.type === 'success' ? 'fa-check-circle' : alert.type === 'error' ? 'fa-exclamation-triangle' : 'fa-info-circle'}`}></i>
                         {alert.message}
-                        <button className="alert-close" onClick={() => setAlert(null)}>×</button>
+                        <button type="button" className="btn-close" onClick={() => setAlert(null)}></button>
+                    </div>
+                )}
+
+                {/* Error */}
+                {error && (
+                    <div className="alert alert-danger alert-dismissible fade show">
+                        <i className="fas fa-exclamation-triangle"></i>
+                        {error}
+                        <button type="button" className="btn-close" onClick={() => setError(null)}></button>
                     </div>
                 )}
 
@@ -196,6 +201,8 @@ const Journals = () => {
                             type="text"
                             placeholder="Search journals..."
                             className="search-input"
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
                         />
                         <button className="search-btn">
                             <i className="fas fa-search"></i>
@@ -247,11 +254,12 @@ const Journals = () => {
                                             )}
                                             {isOwner && (
                                                 <span className="badge badge-owner">
-                                                    <i className="fas fa-crown"></i>
-                                                    Owner
+                                                    <i className="fas fa-user"></i>
+                                                    Mine
                                                 </span>
                                             )}
                                         </div>
+
                                         <div className="journal-meta">
                                             <span className="journal-date">{formatDate(journal.createdAt)}</span>
                                         </div>
@@ -259,7 +267,7 @@ const Journals = () => {
 
                                     <div className="journal-card-content">
                                         <h3 className="journal-title">{journal.title}</h3>
-                                        <p className="journal-author">By {journal.author || user?.name || 'Unknown Author'}</p>
+                                        <p className="journal-author">By {journal.userName || 'Unknown Author'}</p>
                                         <p className="journal-excerpt">
                                             {journal.content?.substring(0, 120)}...
                                         </p>

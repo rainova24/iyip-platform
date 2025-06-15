@@ -1,5 +1,7 @@
+// frontend/src/services/submission.js
 import api from './api';
 
+// Journal Service
 export const journalService = {
     getPublicJournals: async () => {
         const response = await api.get('/journals/public');
@@ -37,6 +39,48 @@ export const journalService = {
 
     searchJournals: async (keyword) => {
         const response = await api.get(`/journals/search?keyword=${encodeURIComponent(keyword)}`);
+        return response.data;
+    }
+};
+
+// Submission Service
+export const submissionService = {
+    getUserSubmissions: async () => {
+        const response = await api.get('/submissions/my-submissions');
+        return response.data;
+    },
+
+    getAllSubmissions: async () => {
+        const response = await api.get('/submissions');
+        return response.data;
+    },
+
+    getSubmissionById: async (id) => {
+        const response = await api.get(`/submissions/${id}`);
+        return response.data;
+    },
+
+    createSubmission: async (submissionData) => {
+        const response = await api.post('/submissions', submissionData);
+        return response.data;
+    },
+
+    updateSubmission: async (id, submissionData) => {
+        const response = await api.put(`/submissions/${id}`, submissionData);
+        return response.data;
+    },
+
+    deleteSubmission: async (id) => {
+        await api.delete(`/submissions/${id}`);
+    },
+
+    getSubmissionsByStatus: async (status) => {
+        const response = await api.get(`/submissions/by-status/${status}`);
+        return response.data;
+    },
+
+    updateSubmissionStatus: async (id, status) => {
+        const response = await api.put(`/submissions/${id}/status`, { status });
         return response.data;
     }
 };

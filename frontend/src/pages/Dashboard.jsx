@@ -1,7 +1,8 @@
 // frontend/src/pages/Dashboard.jsx
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import authService from '../services/authService';
+import { journalService, submissionService } from '../services/submission';
+import api from '../services/api';
 
 const Dashboard = () => {
     const { user } = useAuth();
@@ -21,27 +22,31 @@ const Dashboard = () => {
         try {
             setLoading(true);
 
-            // Load data from API
-            const [journals, events, communities, submissions] = await Promise.all([
-                authService.getMyJournals().catch(() => ({ data: [] })),
-                authService.getMyEvents().catch(() => ({ data: [] })),
-                authService.getCommunities().catch(() => ({ data: [] })),
-                authService.getMySubmissions().catch(() => ({ data: [] }))
+            // Load data from real API endpoints
+            const [journalsResponse, communitiesResponse, submissionsResponse] = await Promise.all([
+                journalService.getUserJournals().catch(() => ({ data: [] })),
+                api.get('/communities').catch(() => ({ data: [] })),
+                submissionService.getUserSubmissions().catch(() => ({ data: [] }))
             ]);
 
+            // Extract arrays safely
+            const journals = Array.isArray(journalsResponse?.data) ? journalsResponse.data : [];
+            const communities = Array.isArray(communitiesResponse?.data) ? communitiesResponse.data : [];
+            const submissions = Array.isArray(submissionsResponse?.data) ? submissionsResponse.data : [];
+
             setStats({
-                myJournals: journals.data?.length || 0,
-                registeredEvents: events.data?.length || 0,
-                totalCommunities: communities.data?.length || 12,
-                totalSubmissions: submissions.data?.length || 0
+                myJournals: journals.length,
+                registeredEvents: 0, // You can add events API later
+                totalCommunities: communities.length,
+                totalSubmissions: submissions.length
             });
         } catch (error) {
             console.error('Error loading dashboard data:', error);
-            // Set default demo data
+            // Set fallback values
             setStats({
                 myJournals: 0,
                 registeredEvents: 0,
-                totalCommunities: 12,
+                totalCommunities: 0,
                 totalSubmissions: 0
             });
         } finally {
@@ -53,7 +58,9 @@ const Dashboard = () => {
         return (
             <div className="dashboard-loading">
                 <div className="loading-content">
-                    <div className="loading-spinner"></div>
+                    <div className="spinner-border text-primary" role="status">
+                        <span className="visually-hidden">Loading...</span>
+                    </div>
                     <p>Loading your dashboard...</p>
                 </div>
             </div>
@@ -67,26 +74,32 @@ const Dashboard = () => {
                 <div className="welcome-header">
                     <div className="welcome-content">
                         <div className="user-avatar-large">
-                            {user?.name?.charAt(0).toUpperCase() || ''}
+                            {user?.name?.charAt(0)?.toUpperCase() || 'U'}
                         </div>
                         <div className="welcome-text">
-                            <h1>Welcome, {user?.name || 'Admin User'}!</h1>
+                            <h1>Welcome, {user?.name || 'User'}!</h1>
                             <div className="user-info dark">
-                                <span><i className="fas fa-envelope"></i> {user?.email || 'admin@iyip.com'}</span>
-                                <span><i className="fas fa-user-tag"></i> {user?.role || 'Student'}</span>
+                                <span>
+                                    <i className="fas fa-envelope"></i>
+                                    {user?.email || 'user@example.com'}
+                                </span>
+                                <span>
+                                    <i className="fas fa-user-tag"></i>
+                                    {user?.roleName || 'Student'}
+                                </span>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                {/* Stats Grid - Full Width */}
+                {/* Overview Statistics */}
                 <div className="stats-section">
                     <h2 className="section-title">Overview Statistics</h2>
                     <div className="stats-grid">
                         <div className="stat-card">
                             <div className="stat-header">
                                 <div className="stat-icon journals">
-                                    <i className="fas fa-book"></i>
+                                    <i className="fas fa-book-open"></i>
                                 </div>
                                 <div className="stat-number">{stats.myJournals}</div>
                             </div>
@@ -178,7 +191,6 @@ const Dashboard = () => {
                         </div>
                     </div>
                 </div>
-
                 {/* Recent Activity */}
                 <div className="recent-activity-section">
                     <h2 className="section-title">Recent Activity</h2>

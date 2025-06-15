@@ -4,7 +4,6 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './styles/style.css';
 import './styles/navbar.css';
-import UserInfo from './pages/UserInfo';
 
 // Components
 import Navbar from './components/Navbar';
@@ -13,9 +12,12 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import Journals from './pages/Journals';
+import JournalEdit from './pages/JournalEdit';
 import Events from './pages/Events';
 import Submissions from './pages/Submissions';
+import SubmissionDetail from './pages/SubmissionDetail';
 import Communities from './pages/Communities';
+import UserInfo from './pages/UserInfo';
 
 // Auth Context
 import { AuthProvider, useAuth } from './contexts/AuthContext';
@@ -50,14 +52,14 @@ function AppContent() {
                     path="/register"
                     element={!isAuthenticated ? <Register /> : <Navigate to="/dashboard" />}
                 />
+
+                {/* Protected Routes */}
                 <Route
                     path="/dashboard"
                     element={
                         <ProtectedRoute>
                             <Navbar />
-                            <div className="main-content">
-                                <Dashboard />
-                            </div>
+                            <Dashboard />
                         </ProtectedRoute>
                     }
                 />
@@ -66,9 +68,16 @@ function AppContent() {
                     element={
                         <ProtectedRoute>
                             <Navbar />
-                            <div className="main-content">
-                                <Journals />
-                            </div>
+                            <Journals />
+                        </ProtectedRoute>
+                    }
+                />
+                <Route
+                    path="/journals/:id/edit"
+                    element={
+                        <ProtectedRoute>
+                            <Navbar />
+                            <JournalEdit />
                         </ProtectedRoute>
                     }
                 />
@@ -77,18 +86,7 @@ function AppContent() {
                     element={
                         <ProtectedRoute>
                             <Navbar />
-                            <div className="main-content">
-                                <Events />
-                            </div>
-                        </ProtectedRoute>
-                    }
-                />
-                <Route
-                    path="/users"
-                    element={
-                        <ProtectedRoute>
-                            <Navbar />
-                            <UserInfo />
+                            <Events />
                         </ProtectedRoute>
                     }
                 />
@@ -97,32 +95,40 @@ function AppContent() {
                     element={
                         <ProtectedRoute>
                             <Navbar />
-                            <div className="main-content">
-                                <Submissions />
-                            </div>
+                            <Submissions />
                         </ProtectedRoute>
                     }
                 />
-                <Route 
-                    path="/profile" 
+                <Route
+                    path="/submissions/:id"
                     element={
                         <ProtectedRoute>
                             <Navbar />
-                            <UserInfo />
+                            <SubmissionDetail />
                         </ProtectedRoute>
-                    } 
+                    }
                 />
                 <Route
                     path="/communities"
                     element={
                         <ProtectedRoute>
                             <Navbar />
-                            <div className="main-content">
-                                <Communities />
-                            </div>
+                            <Communities />
                         </ProtectedRoute>
                     }
                 />
+                <Route
+                    path="/profile"
+                    element={
+                        <ProtectedRoute>
+                            <Navbar />
+                            <UserInfo />
+                        </ProtectedRoute>
+                    }
+                />
+
+                {/* Fallback route */}
+                <Route path="*" element={<Navigate to="/" />} />
             </Routes>
         </div>
     );
