@@ -14,6 +14,8 @@ import org.springframework.web.bind.annotation.*;
 
 import jakarta.validation.Valid;
 import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
 
 @RestController
 @RequestMapping("/api/users")
@@ -69,9 +71,24 @@ public class UserController {
     // Admin: Delete user
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
+    public ResponseEntity<?> deleteUser(@PathVariable Long id) {
+        // Get user info before deletion for response message
+        UserResponse userToDelete = userService.findById(id);
+
         userService.deleteById(id);
-        return ResponseEntity.noContent().build();
+
+        // Return success message with user info
+        Map<String, Object> response = new HashMap<>();
+        response.put("success", true);
+        response.put("message", "User berhasil dihapus");
+        response.put("deletedUser", Map.of(
+                "userId", userToDelete.getUserId(),
+                "name", userToDelete.getName(),
+                "email", userToDelete.getEmail()
+        ));
+        response.put("timestamp", java.time.LocalDateTime.now().toString());
+
+        return ResponseEntity.ok(response);
     }
 
     // Admin: Get users by type
