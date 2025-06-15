@@ -30,10 +30,6 @@ public class CommunityController {
 
     // ===== PUBLIC ENDPOINTS =====
 
-    /**
-     * Get all communities
-     * GET /api/communities
-     */
     @GetMapping
     public ResponseEntity<?> getAllCommunities() {
         try {
@@ -42,14 +38,10 @@ public class CommunityController {
         } catch (Exception e) {
             log.error("Error getting communities", e);
             return ResponseEntity.badRequest()
-                    .body(ApiResponse.error("Failed to get communities"));
+                    .body(ApiResponse.error("Failed to get communities: " + e.getMessage()));
         }
     }
 
-    /**
-     * Get specific community by ID
-     * GET /api/communities/{id}
-     */
     @GetMapping("/{id}")
     public ResponseEntity<?> getCommunityById(@PathVariable Long id) {
         try {
@@ -62,10 +54,6 @@ public class CommunityController {
         }
     }
 
-    /**
-     * Get community members
-     * GET /api/communities/{id}/members
-     */
     @GetMapping("/{id}/members")
     public ResponseEntity<?> getCommunityMembers(@PathVariable Long id) {
         try {
@@ -80,10 +68,6 @@ public class CommunityController {
 
     // ===== USER ENDPOINTS =====
 
-    /**
-     * Get user's communities (for logged in user)
-     * GET /api/communities/my-communities
-     */
     @GetMapping("/my-communities")
     public ResponseEntity<?> getMyUserCommunities(@AuthenticationPrincipal UserDetailsImpl userDetails) {
         try {
@@ -96,10 +80,6 @@ public class CommunityController {
         }
     }
 
-    /**
-     * Join a community
-     * POST /api/communities/{id}/join
-     */
     @PostMapping("/{id}/join")
     public ResponseEntity<?> joinCommunity(
             @PathVariable Long id,
@@ -110,14 +90,10 @@ public class CommunityController {
         } catch (Exception e) {
             log.error("Error joining community {} for user {}", id, userDetails.getId(), e);
             return ResponseEntity.badRequest()
-                    .body(ApiResponse.error("Failed to join community"));
+                    .body(ApiResponse.error("Failed to join community: " + e.getMessage()));
         }
     }
 
-    /**
-     * Leave a community
-     * DELETE /api/communities/{id}/leave
-     */
     @DeleteMapping("/{id}/leave")
     public ResponseEntity<?> leaveCommunity(
             @PathVariable Long id,
@@ -128,7 +104,7 @@ public class CommunityController {
         } catch (Exception e) {
             log.error("Error leaving community {} for user {}", id, userDetails.getId(), e);
             return ResponseEntity.badRequest()
-                    .body(ApiResponse.error("Failed to leave community"));
+                    .body(ApiResponse.error("Failed to leave community: " + e.getMessage()));
         }
     }
 
@@ -149,7 +125,7 @@ public class CommunityController {
         } catch (Exception e) {
             log.error("Error creating community", e);
             return ResponseEntity.badRequest()
-                    .body(ApiResponse.error("Failed to create community"));
+                    .body(ApiResponse.error("Failed to create community: " + e.getMessage()));
         }
     }
 
@@ -192,6 +168,26 @@ public class CommunityController {
     }
 
     /**
+     * Admin: Get all communities with pagination (optional enhancement)
+     * GET /api/communities/admin/all
+     */
+    @GetMapping("/admin/all")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<?> getAllCommunitiesForAdmin(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        try {
+            // Note: You may need to add pagination support in service layer
+            List<CommunityResponse> communities = communityService.findAll();
+            return ResponseEntity.ok(ApiResponse.success("All communities retrieved for admin", communities));
+        } catch (Exception e) {
+            log.error("Error getting all communities for admin", e);
+            return ResponseEntity.badRequest()
+                    .body(ApiResponse.error("Failed to get communities"));
+        }
+    }
+
+    /**
      * Admin: Check if user is member of community
      * GET /api/communities/{communityId}/members/{userId}/status
      */
@@ -202,13 +198,8 @@ public class CommunityController {
             @PathVariable Long userId) {
         try {
             boolean isMember = communityService.isUserMember(communityId, userId);
-
             return ResponseEntity.ok(ApiResponse.success("Membership status retrieved",
-                    java.util.Map.of(
-                            "userId", userId,
-                            "communityId", communityId,
-                            "isMember", isMember
-                    )));
+                    new MembershipStatus(userId, communityId, isMember)));
         } catch (Exception e) {
             log.error("Error checking membership for user {} in community {}", userId, communityId, e);
             return ResponseEntity.badRequest()
@@ -216,20 +207,30 @@ public class CommunityController {
         }
     }
 
+    // ===== INNER CLASSES =====
+
     /**
-     * Admin: Get all communities with detailed info
-     * GET /api/communities/admin/all
+     * Helper class for membership status response
      */
-    @GetMapping("/admin/all")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<?> getAllCommunitiesForAdmin() {
-        try {
-            List<CommunityResponse> communities = communityService.findAll();
-            return ResponseEntity.ok(ApiResponse.success("All communities retrieved for admin", communities));
-        } catch (Exception e) {
-            log.error("Error getting all communities for admin", e);
-            return ResponseEntity.badRequest()
-                    .body(ApiResponse.error("Failed to get communities"));
+    public static class MembershipStatus {
+        private Long userId;
+        private Long communityId;
+        private boolean isMember;
+
+        public MembershipStatus(Long userId, Long communityId, boolean isMember) {
+            this.userId = userId;
+            this.communityId = communityId;
+            this.isMember = isMember;
         }
+
+        // Getters
+        public Long getUserId() { return userId; }
+        public Long getCommunityId() { return communityId; }
+        public boolean isMember() { return isMember; }
+
+        // Setters
+        public void setUserId(Long userId) { this.userId = userId; }
+        public void setCommunityId(Long communityId) { this.communityId = communityId; }
+        public void setMember(boolean member) { isMember = member; }
     }
 }

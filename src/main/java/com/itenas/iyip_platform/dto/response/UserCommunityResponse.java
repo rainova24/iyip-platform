@@ -8,6 +8,7 @@ public class UserCommunityResponse {
     private Long userCommunityId;
     private Long userId;
     private String userName;
+    private String userEmail;
     private Long communityId;
     private String communityName;
     private LocalDateTime joinedAt;
