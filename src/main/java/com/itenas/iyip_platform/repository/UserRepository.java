@@ -14,12 +14,13 @@ import java.util.Optional;
 @Repository
 public interface UserRepository extends JpaRepository<User, Long> {
 
+    // Basic finders
     Optional<User> findByEmail(String email);
     Optional<User> findByNim(String nim);
     boolean existsByEmail(String email);
     boolean existsByNim(String nim);
 
-    // Role-based queries (menggantikan AdminUserRepository dan RegularUserRepository)
+    // Role-based queries
     @Query("SELECT u FROM User u WHERE u.role.name = 'ADMIN'")
     List<User> findAllAdmins();
 

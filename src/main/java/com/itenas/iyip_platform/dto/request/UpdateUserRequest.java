@@ -29,5 +29,10 @@ public class UpdateUserRequest {
     @Size(max = 100, message = "City must be max 100 characters")
     private String city;
 
+    // TAMBAHAN UNTUK ROLE (hanya admin yang bisa ubah ini)
+    private Long roleId;
+
+    private String roleName;
+
     // Removed: department and accessLevel (tidak ada di TRD)
 }

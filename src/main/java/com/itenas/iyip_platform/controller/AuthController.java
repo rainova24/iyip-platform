@@ -2,6 +2,7 @@ package com.itenas.iyip_platform.controller;
 
 import com.itenas.iyip_platform.dto.request.LoginRequest;
 import com.itenas.iyip_platform.dto.request.RegisterRequest;
+import com.itenas.iyip_platform.dto.request.ChangePasswordRequest;
 import com.itenas.iyip_platform.dto.response.LoginResponse;
 import com.itenas.iyip_platform.dto.response.RegisterResponse;
 import com.itenas.iyip_platform.dto.response.UserResponse;
@@ -139,6 +140,54 @@ public class AuthController {
             log.error("Registration failed for email: {}", registerRequest.getEmail(), e);
             Map<String, String> error = new HashMap<>();
             error.put("message", "Registration failed: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
+        }
+    }
+
+    @PostMapping("/change-password")
+    public ResponseEntity<?> changePassword(
+            Authentication authentication,
+            @Valid @RequestBody ChangePasswordRequest request) {
+        try {
+            if (authentication == null || !authentication.isAuthenticated()) {
+                Map<String, String> error = new HashMap<>();
+                error.put("message", "User not authenticated");
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
+            }
+
+            // Validate password match
+            if (!request.isPasswordsMatch()) {
+                Map<String, String> error = new HashMap<>();
+                error.put("message", "New password and confirm password do not match");
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+            }
+
+            log.info("Password change request for user: {}", authentication.getName());
+
+            // Get current user
+            String email = authentication.getName();
+            User user = userRepository.findByEmail(email)
+                    .orElseThrow(() -> new RuntimeException("User not found"));
+
+            // Verify current password
+            if (!passwordEncoder.matches(request.getCurrentPassword(), user.getPassword())) {
+                Map<String, String> error = new HashMap<>();
+                error.put("message", "Current password is incorrect");
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+            }
+
+            // Update password
+            user.setPassword(passwordEncoder.encode(request.getNewPassword()));
+            userRepository.save(user);
+
+            Map<String, String> response = new HashMap<>();
+            response.put("message", "Password changed successfully");
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            log.error("Password change failed", e);
+            Map<String, String> error = new HashMap<>();
+            error.put("message", "Password change failed: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
         }
     }
