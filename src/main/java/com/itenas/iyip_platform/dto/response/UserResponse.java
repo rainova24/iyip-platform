@@ -1,4 +1,4 @@
-package com.itenas.iyip_platform.dto.response;
+package com.itenas.iyip.dto.response;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Data;
@@ -26,5 +26,7 @@ public class UserResponse {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
-    // Removed: department and accessLevel (tidak ada di TRD)
+    // TAMBAHAN: Role information for debugging
+    private Long roleId;        // Role ID untuk reference
+    private String roleName;    // Role name (sama dengan userType)
 }

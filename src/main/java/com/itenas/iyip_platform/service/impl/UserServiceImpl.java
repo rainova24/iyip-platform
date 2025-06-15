@@ -221,8 +221,13 @@ public class UserServiceImpl implements UserService {
     }
 
     private void handleRoleUpdate(User user, UpdateUserRequest request, Long userId) {
-        // Check if role update is requested
+        // DEBUGGING: Log semua parameter yang masuk
+        log.info("DEBUG: handleRoleUpdate called - userId: {}, roleId: {}, roleName: {}",
+                userId, request.getRoleId(), request.getRoleName());
+
+        // Check if role update is requested - PRIORITAS ROLE_ID DULU
         if (request.getRoleId() == null && request.getRoleName() == null) {
+            log.info("DEBUG: No role update requested - roleId and roleName are both null");
             return; // No role update requested
         }
 
@@ -231,20 +236,28 @@ public class UserServiceImpl implements UserService {
         boolean isAdmin = auth != null && auth.getAuthorities().stream()
                 .anyMatch(authority -> authority.getAuthority().equals("ROLE_ADMIN"));
 
+        log.info("DEBUG: Current user is admin: {}, auth name: {}", isAdmin, auth != null ? auth.getName() : "null");
+
         if (!isAdmin) {
             log.warn("Non-admin user {} attempted to change role for user {}",
                     auth != null ? auth.getName() : "unknown", userId);
             throw new SecurityException("Only administrators can change user roles");
         }
 
-        // Find the new role
+        // Find the new role - PRIORITAS ROLE_ID
         Role newRole = null;
         if (request.getRoleId() != null) {
+            // UTAMAKAN ROLE_ID jika ada
+            log.info("DEBUG: Looking for role with ID: {}", request.getRoleId());
             newRole = roleRepository.findById(request.getRoleId())
                     .orElseThrow(() -> new ResourceNotFoundException("Role not found with id: " + request.getRoleId()));
+            log.info("DEBUG: Found role by ID - name: {}, id: {}", newRole.getName(), newRole.getRoleId());
         } else if (request.getRoleName() != null) {
+            // FALLBACK ke roleName jika roleId tidak ada
+            log.info("DEBUG: Looking for role with name: {}", request.getRoleName());
             newRole = roleRepository.findByName(request.getRoleName())
                     .orElseThrow(() -> new ResourceNotFoundException("Role not found with name: " + request.getRoleName()));
+            log.info("DEBUG: Found role by name - name: {}, id: {}", newRole.getName(), newRole.getRoleId());
         }
 
         if (newRole != null) {
@@ -254,12 +267,17 @@ public class UserServiceImpl implements UserService {
                 throw new SecurityException("Admin cannot remove their own admin privileges");
             }
 
-            String oldRole = user.getRole().getName();
+            String oldRoleName = user.getRole().getName();
+            Long oldRoleId = user.getRole().getRoleId();
+
+            log.info("DEBUG: Changing role from {} (id: {}) to {} (id: {})",
+                    oldRoleName, oldRoleId, newRole.getName(), newRole.getRoleId());
+
             user.setRole(newRole);
 
-            log.info("ROLE_CHANGE: User {} ({}) role changed from {} to {} by Admin {} at {}",
-                    user.getEmail(), user.getUserId(), oldRole, newRole.getName(),
-                    auth.getName(), java.time.LocalDateTime.now());
+            log.info("ROLE_CHANGE: User {} ({}) role changed from {} (id: {}) to {} (id: {}) by Admin {} at {}",
+                    user.getEmail(), user.getUserId(), oldRoleName, oldRoleId,
+                    newRole.getName(), newRole.getRoleId(), auth.getName(), java.time.LocalDateTime.now());
         }
     }
 
@@ -277,8 +295,12 @@ public class UserServiceImpl implements UserService {
         response.setProvince(user.getProvince());
         response.setCity(user.getCity());
 
-        // Role-based userType
-        response.setUserType(user.getRoleName());
+        // Role information - INI YANG PENTING!
+        if (user.getRole() != null) {
+            response.setUserType(user.getRole().getName());   // userType = role name
+            response.setRoleId(user.getRole().getRoleId());   // roleId untuk reference
+            response.setRoleName(user.getRole().getName());   // roleName (sama dengan userType)
+        }
 
         // Timestamps
         response.setCreatedAt(user.getCreatedAt());

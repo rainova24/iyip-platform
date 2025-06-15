@@ -91,6 +91,11 @@ public class User extends BaseEntity {
         return role != null ? role.getName() : null;
     }
 
+    // Method to get role ID
+    public Long getRoleId() {
+        return role != null ? role.getRoleId() : null;
+    }
+
     @PrePersist
     protected void onCreate() {
         registeredAt = LocalDateTime.now();
