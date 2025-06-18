@@ -40,7 +40,7 @@ const Navbar = () => {
 
     const navItems = [
         { path: '/dashboard', label: 'Dashboard', icon: 'fas fa-tachometer-alt' },
-        { path: '/journarls', label: 'Journals', icon: 'fas fa-book-open' },
+        { path: '/journals', label: 'Journals', icon: 'fas fa-book-open' },
         { path: '/events', label: 'Events', icon: 'fas fa-calendar-alt' },
         { path: '/communities', label: 'Communities', icon: 'fas fa-users' },
         { path: '/submissions', label: 'Submissions', icon: 'fas fa-paper-plane' },
