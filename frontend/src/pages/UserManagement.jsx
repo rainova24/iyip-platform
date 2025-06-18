@@ -1,4 +1,4 @@
-// frontend/src/pages/UserManagement.jsx
+// frontend/src/pages/UserManagement.jsx - IMPROVED VERSION
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import api from '../services/api';
@@ -6,81 +6,61 @@ import api from '../services/api';
 const UserManagement = () => {
     const { user } = useAuth();
     const [users, setUsers] = useState([]);
+    const [filteredUsers, setFilteredUsers] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
     const [alert, setAlert] = useState(null);
-    const [filter, setFilter] = useState('all');
     const [searchTerm, setSearchTerm] = useState('');
-    const [selectedUser, setSelectedUser] = useState(null);
-    const [showEditModal, setShowEditModal] = useState(false);
+    const [activeFilter, setActiveFilter] = useState('All Users');
 
     useEffect(() => {
-        if (user?.roleName === 'ADMIN') {
-            loadUsers();
-        }
-    }, [user]);
+        loadUsers();
+    }, []);
+
+    useEffect(() => {
+        filterUsers();
+    }, [users, searchTerm, activeFilter]);
 
     const loadUsers = async () => {
         try {
             setLoading(true);
             const response = await api.get('/users');
-            const usersData = response?.data || [];
-            setUsers(Array.isArray(usersData) ? usersData : []);
+            const usersData = response.data || [];
+            setUsers(usersData);
         } catch (error) {
             console.error('Error loading users:', error);
-            setError('Failed to load users');
-            setUsers([]);
+            setAlert({ type: 'error', message: 'Failed to load users' });
         } finally {
             setLoading(false);
         }
     };
 
-    const getFilteredUsers = () => {
+    const filterUsers = () => {
         let filtered = users;
 
-        if (filter === 'admin') {
-            filtered = users.filter(u => u.roleName === 'ADMIN');
-        } else if (filter === 'user') {
-            filtered = users.filter(u => u.roleName === 'USER');
+        // Filter by role
+        if (activeFilter === 'Administrators') {
+            filtered = filtered.filter(u => u.roleName === 'ADMIN');
+        } else if (activeFilter === 'Regular Users') {
+            filtered = filtered.filter(u => u.roleName === 'USER');
         }
 
-        // Apply search filter
+        // Filter by search term
         if (searchTerm) {
-            filtered = filtered.filter(user =>
-                user.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                user.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                user.nim?.toLowerCase().includes(searchTerm.toLowerCase())
+            filtered = filtered.filter(u =>
+                u.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                u.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                u.nim?.toLowerCase().includes(searchTerm.toLowerCase())
             );
         }
 
-        return filtered;
+        setFilteredUsers(filtered);
     };
 
-    const filteredUsers = getFilteredUsers();
-
-    const formatDate = (dateString) => {
-        if (!dateString) return 'Not set';
-        return new Date(dateString).toLocaleDateString('en-US', {
-            year: 'numeric',
-            month: 'short',
-            day: 'numeric'
-        });
-    };
-
-    const getRoleBadge = (roleName) => {
-        return roleName === 'ADMIN' ? 'badge-danger' : 'badge-primary';
-    };
-
-    const handleEditUser = (userData) => {
-        setSelectedUser(userData);
-        setShowEditModal(true);
-    };
-
-    const handleDeleteUser = async (userId) => {
-        if (window.confirm('Are you sure you want to delete this user? This action cannot be undone.')) {
+    const handleDeleteUser = async (userId, userName) => {
+        if (window.confirm(`Are you sure you want to delete user "${userName}"?`)) {
             try {
                 await api.delete(`/users/${userId}`);
-                setAlert({ type: 'success', message: 'User deleted successfully!' });
+                setAlert({ type: 'success', message: `User "${userName}" deleted successfully` });
                 loadUsers();
             } catch (error) {
                 console.error('Error deleting user:', error);
@@ -90,12 +70,28 @@ const UserManagement = () => {
         }
     };
 
+    const formatDate = (dateString) => {
+        if (!dateString) return 'N/A';
+        return new Date(dateString).toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric'
+        });
+    };
+
+    const getNewUsersCount = () => {
+        const thirtyDaysAgo = new Date(Date.now() - 30*24*60*60*1000);
+        return users.filter(u => u.createdAt && new Date(u.createdAt) > thirtyDaysAgo).length;
+    };
+
     if (user?.roleName !== 'ADMIN') {
         return (
-            <div className="container mt-4">
-                <div className="alert alert-danger">
-                    <i className="fas fa-exclamation-triangle me-2"></i>
-                    Access denied. Admin privileges required.
+            <div className="user-management-page">
+                <div className="user-management-container">
+                    <div className="alert alert-danger">
+                        <i className="fas fa-exclamation-triangle"></i>
+                        Access denied. Admin privileges required.
+                    </div>
                 </div>
             </div>
         );
@@ -125,7 +121,10 @@ const UserManagement = () => {
                         <p>Manage all users in the system</p>
                     </div>
                     <div className="header-actions">
-                        <button className="btn btn-primary" onClick={() => window.location.href = '/register'}>
+                        <button
+                            className="btn btn-primary"
+                            onClick={() => window.location.href = '/register'}
+                        >
                             <i className="fas fa-user-plus"></i>
                             Add New User
                         </button>
@@ -147,55 +146,33 @@ const UserManagement = () => {
                         <span className="stat-label">Regular Users</span>
                     </div>
                     <div className="stat-item">
-                        <span className="stat-number">{users.filter(u => u.createdAt && new Date(u.createdAt) > new Date(Date.now() - 30*24*60*60*1000)).length}</span>
+                        <span className="stat-number">{getNewUsersCount()}</span>
                         <span className="stat-label">New (30 days)</span>
                     </div>
                 </div>
 
                 {/* Alert */}
                 {alert && (
-                    <div className={`alert alert-${alert.type === 'error' ? 'danger' : alert.type}`}>
-                        <i className={`fas ${alert.type === 'success' ? 'fa-check-circle' : 'fa-exclamation-triangle'}`}></i>
+                    <div className={`alert alert-${alert.type === 'error' ? 'danger' : 'success'}`}>
+                        <i className={`fas fa-${alert.type === 'error' ? 'exclamation-circle' : 'check-circle'}`}></i>
                         {alert.message}
-                        <button className="alert-close" onClick={() => setAlert(null)}>×</button>
-                    </div>
-                )}
-
-                {/* Error */}
-                {error && (
-                    <div className="alert alert-danger">
-                        <i className="fas fa-exclamation-triangle"></i>
-                        {error}
-                        <button className="alert-close" onClick={() => setError(null)}>×</button>
                     </div>
                 )}
 
                 {/* Filters */}
                 <div className="user-management-filters">
                     <div className="filter-tabs">
-                        <button
-                            className={`filter-tab ${filter === 'all' ? 'active' : ''}`}
-                            onClick={() => setFilter('all')}
-                        >
-                            <i className="fas fa-users"></i>
-                            All Users
-                        </button>
-                        <button
-                            className={`filter-tab ${filter === 'admin' ? 'active' : ''}`}
-                            onClick={() => setFilter('admin')}
-                        >
-                            <i className="fas fa-user-shield"></i>
-                            Administrators
-                        </button>
-                        <button
-                            className={`filter-tab ${filter === 'user' ? 'active' : ''}`}
-                            onClick={() => setFilter('user')}
-                        >
-                            <i className="fas fa-user"></i>
-                            Regular Users
-                        </button>
+                        {['All Users', 'Administrators', 'Regular Users'].map(filter => (
+                            <button
+                                key={filter}
+                                className={`filter-tab ${activeFilter === filter ? 'active' : ''}`}
+                                onClick={() => setActiveFilter(filter)}
+                            >
+                                {filter}
+                            </button>
+                        ))}
                     </div>
-                    <div className="search-box">
+                    <div className="search-section">
                         <input
                             type="text"
                             placeholder="Search users..."
@@ -203,81 +180,73 @@ const UserManagement = () => {
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                         />
-                        <button className="search-btn">
-                            <i className="fas fa-search"></i>
-                        </button>
+                        <i className="fas fa-search" style={{ color: '#999' }}></i>
                     </div>
                 </div>
 
-                {/* Users Table/Grid */}
-                <div className="users-grid">
-                    {filteredUsers.length === 0 ? (
-                        <div className="empty-state">
-                            <div className="empty-icon">
-                                <i className="fas fa-users"></i>
-                            </div>
-                            <h3>No users found</h3>
-                            <p>
-                                {filter !== 'all' ? `No ${filter} users found.` : 'No users in the system.'}
-                            </p>
-                        </div>
-                    ) : (
-                        filteredUsers.map((userData) => (
-                            <div key={userData.userId} className="user-card">
+                {/* Users Grid */}
+                {filteredUsers.length === 0 ? (
+                    <div className="empty-state">
+                        <i className="fas fa-users"></i>
+                        <h3>No users found</h3>
+                        <p>Try adjusting your search or filter criteria</p>
+                    </div>
+                ) : (
+                    <div className="users-grid">
+                        {filteredUsers.map(userItem => (
+                            <div key={userItem.userId} className="user-card">
                                 <div className="user-card-header">
-                                    <div className="user-avatar-large">
-                                        {userData.name?.charAt(0)?.toUpperCase() || 'U'}
+                                    <div className="user-avatar">
+                                        {userItem.name?.charAt(0)?.toUpperCase() || 'U'}
                                     </div>
-                                    <div className="user-badges">
-                                        <span className={`badge ${getRoleBadge(userData.roleName)}`}>
-                                            <i className={userData.roleName === 'ADMIN' ? 'fas fa-user-shield' : 'fas fa-user'}></i>
-                                            {userData.roleName}
+                                    <div className="user-info">
+                                        <h3>{userItem.name || 'Unknown User'}</h3>
+                                        <p>{userItem.email}</p>
+                                        <span className={`user-role role-${userItem.roleName?.toLowerCase() || 'user'}`}>
+                                            {userItem.roleName || 'USER'}
                                         </span>
                                     </div>
                                 </div>
 
-                                <div className="user-card-content">
-                                    <h3 className="user-name">{userData.name || 'No Name'}</h3>
-                                    <p className="user-email">{userData.email}</p>
-
+                                <div className="user-card-body">
                                     <div className="user-details">
                                         <div className="detail-item">
-                                            <i className="fas fa-id-card"></i>
-                                            <span>{userData.nim || 'No NIM'}</span>
+                                            <span className="detail-label">NIM</span>
+                                            <span className="detail-value">{userItem.nim || 'N/A'}</span>
                                         </div>
                                         <div className="detail-item">
-                                            <i className="fas fa-phone"></i>
-                                            <span>{userData.phone || 'No Phone'}</span>
+                                            <span className="detail-label">Phone</span>
+                                            <span className="detail-value">{userItem.phone || 'N/A'}</span>
                                         </div>
                                         <div className="detail-item">
-                                            <i className="fas fa-map-marker-alt"></i>
-                                            <span>{userData.city || userData.province || 'No Location'}</span>
+                                            <span className="detail-label">Location</span>
+                                            <span className="detail-value">
+                                                {userItem.city && userItem.province
+                                                    ? `${userItem.city}, ${userItem.province}`
+                                                    : 'N/A'
+                                                }
+                                            </span>
                                         </div>
                                         <div className="detail-item">
-                                            <i className="fas fa-calendar"></i>
-                                            <span>Joined {formatDate(userData.createdAt)}</span>
+                                            <span className="detail-label">Joined</span>
+                                            <span className="detail-value">{formatDate(userItem.createdAt)}</span>
                                         </div>
                                     </div>
                                 </div>
 
                                 <div className="user-card-actions">
-                                    <button
-                                        className="btn btn-outline btn-sm"
-                                        onClick={() => handleEditUser(userData)}
-                                    >
+                                    <button className="btn btn-secondary btn-sm">
+                                        <i className="fas fa-eye"></i>
+                                        View
+                                    </button>
+                                    <button className="btn btn-primary btn-sm">
                                         <i className="fas fa-edit"></i>
                                         Edit
                                     </button>
-
-                                    <button className="btn btn-secondary btn-sm">
-                                        <i className="fas fa-eye"></i>
-                                        View Profile
-                                    </button>
-
-                                    {userData.userId !== user.userId && (
+                                    {userItem.userId !== user?.userId && (
                                         <button
                                             className="btn btn-danger btn-sm"
-                                            onClick={() => handleDeleteUser(userData.userId)}
+                                            onClick={() => handleDeleteUser(userItem.userId, userItem.name)}
                                         >
                                             <i className="fas fa-trash"></i>
                                             Delete
@@ -285,184 +254,21 @@ const UserManagement = () => {
                                     )}
                                 </div>
                             </div>
-                        ))
-                    )}
-                </div>
-            </div>
-
-            {/* Edit User Modal */}
-            {showEditModal && selectedUser && (
-                <UserEditModal
-                    user={selectedUser}
-                    isOpen={showEditModal}
-                    onClose={() => setShowEditModal(false)}
-                    onUserUpdate={(updatedUser) => {
-                        setUsers(prev =>
-                            prev.map(u =>
-                                u.userId === updatedUser.userId ? updatedUser : u
-                            )
-                        );
-                        setAlert({ type: 'success', message: 'User updated successfully!' });
-                        setTimeout(() => setAlert(null), 3000);
-                    }}
-                />
-            )}
-        </div>
-    );
-};
-
-// Simple Edit Modal Component
-const UserEditModal = ({ user, isOpen, onClose, onUserUpdate }) => {
-    const [formData, setFormData] = useState({
-        name: user?.name || '',
-        email: user?.email || '',
-        nim: user?.nim || '',
-        phone: user?.phone || '',
-        province: user?.province || '',
-        city: user?.city || '',
-        roleName: user?.roleName || 'USER'
-    });
-    const [saving, setSaving] = useState(false);
-
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        try {
-            setSaving(true);
-            const response = await api.put(`/users/${user.userId}`, formData);
-            onUserUpdate(response.data);
-            onClose();
-        } catch (error) {
-            console.error('Error updating user:', error);
-            alert('Failed to update user');
-        } finally {
-            setSaving(false);
-        }
-    };
-
-    if (!isOpen) return null;
-
-    return (
-        <>
-            <div className="modal-backdrop fade show" onClick={onClose}></div>
-            <div className="modal fade show d-block" style={{ zIndex: 1050 }}>
-                <div className="modal-dialog modal-lg">
-                    <div className="modal-content">
-                        <div className="modal-header bg-primary text-white">
-                            <h5 className="modal-title">
-                                <i className="fas fa-user-edit me-2"></i>
-                                Edit User: {user.name}
-                            </h5>
-                            <button type="button" className="btn-close btn-close-white" onClick={onClose}></button>
-                        </div>
-                        <form onSubmit={handleSubmit}>
-                            <div className="modal-body">
-                                <div className="row">
-                                    <div className="col-md-6">
-                                        <div className="mb-3">
-                                            <label className="form-label">Name</label>
-                                            <input
-                                                type="text"
-                                                className="form-control"
-                                                value={formData.name}
-                                                onChange={(e) => setFormData(prev => ({...prev, name: e.target.value}))}
-                                                required
-                                            />
-                                        </div>
-                                    </div>
-                                    <div className="col-md-6">
-                                        <div className="mb-3">
-                                            <label className="form-label">Email</label>
-                                            <input
-                                                type="email"
-                                                className="form-control"
-                                                value={formData.email}
-                                                onChange={(e) => setFormData(prev => ({...prev, email: e.target.value}))}
-                                                required
-                                            />
-                                        </div>
-                                    </div>
-                                    <div className="col-md-6">
-                                        <div className="mb-3">
-                                            <label className="form-label">NIM</label>
-                                            <input
-                                                type="text"
-                                                className="form-control"
-                                                value={formData.nim}
-                                                onChange={(e) => setFormData(prev => ({...prev, nim: e.target.value}))}
-                                            />
-                                        </div>
-                                    </div>
-                                    <div className="col-md-6">
-                                        <div className="mb-3">
-                                            <label className="form-label">Phone</label>
-                                            <input
-                                                type="text"
-                                                className="form-control"
-                                                value={formData.phone}
-                                                onChange={(e) => setFormData(prev => ({...prev, phone: e.target.value}))}
-                                            />
-                                        </div>
-                                    </div>
-                                    <div className="col-md-6">
-                                        <div className="mb-3">
-                                            <label className="form-label">Province</label>
-                                            <input
-                                                type="text"
-                                                className="form-control"
-                                                value={formData.province}
-                                                onChange={(e) => setFormData(prev => ({...prev, province: e.target.value}))}
-                                            />
-                                        </div>
-                                    </div>
-                                    <div className="col-md-6">
-                                        <div className="mb-3">
-                                            <label className="form-label">City</label>
-                                            <input
-                                                type="text"
-                                                className="form-control"
-                                                value={formData.city}
-                                                onChange={(e) => setFormData(prev => ({...prev, city: e.target.value}))}
-                                            />
-                                        </div>
-                                    </div>
-                                    <div className="col-12">
-                                        <div className="mb-3">
-                                            <label className="form-label">Role</label>
-                                            <select
-                                                className="form-select"
-                                                value={formData.roleName}
-                                                onChange={(e) => setFormData(prev => ({...prev, roleName: e.target.value}))}
-                                            >
-                                                <option value="USER">Regular User</option>
-                                                <option value="ADMIN">Administrator</option>
-                                            </select>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div className="modal-footer">
-                                <button type="button" className="btn btn-secondary" onClick={onClose}>
-                                    Cancel
-                                </button>
-                                <button type="submit" className="btn btn-primary" disabled={saving}>
-                                    {saving ? (
-                                        <>
-                                            <span className="spinner-border spinner-border-sm me-2"></span>
-                                            Saving...
-                                        </>
-                                    ) : (
-                                        <>
-                                            <i className="fas fa-save me-1"></i>
-                                            Save Changes
-                                        </>
-                                    )}
-                                </button>
-                            </div>
-                        </form>
+                        ))}
                     </div>
+                )}
+
+                {/* Footer Info */}
+                <div style={{
+                    textAlign: 'center',
+                    padding: '2rem',
+                    color: '#666',
+                    fontSize: '0.9rem'
+                }}>
+                    <p>Showing {filteredUsers.length} of {users.length} users</p>
                 </div>
             </div>
-        </>
+        </div>
     );
 };
 

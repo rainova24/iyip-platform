@@ -167,71 +167,141 @@ const Home = () => {
             </section>
 
             {/* Stats Section */}
-            <section style={{ 
-                padding: '6rem 0', 
-                background: 'var(--white)',
-                borderTop: '1px solid var(--border-color)'
+            <section style={{
+                padding: '6rem 0',
+                background: 'linear-gradient(135deg, #ff6b35 0%, #f7931e 100%)',
+                color: 'white'
             }}>
-                <div className="container">
-                    <div className="text-center mb-5">
-                        <h2 style={{ 
-                            fontSize: '2.5rem', 
-                            fontWeight: '800',
-                            background: 'var(--gradient-primary)',
-                            WebkitBackgroundClip: 'text',
-                            WebkitTextFillColor: 'transparent',
-                            backgroundClip: 'text',
-                            marginBottom: '1rem'
-                        }}>
-                            Platform Statistics
-                        </h2>
-                        <p style={{ 
-                            fontSize: '1.2rem', 
-                            color: 'var(--text-light)',
-                            maxWidth: '600px',
-                            margin: '0 auto'
-                        }}>
-                            Join our growing community of students, researchers, and academics
-                        </p>
-                    </div>
+                <div style={{
+                    maxWidth: '1200px',
+                    margin: '0 auto',
+                    padding: '0 2rem'
+                }}>
 
-                    <div className="stats-grid">
-                        <div className="stat-card slide-up" style={{ animationDelay: '0.1s' }}>
-                            <div className="stat-number">
+                    {/* Title */}
+                    <h2 style={{
+                        fontSize: '2.5rem',
+                        fontWeight: '800',
+                        textAlign: 'center',
+                        marginBottom: '1rem',
+                        color: 'white'
+                    }}>
+                        Platform Statistics
+                    </h2>
+
+                    {/* Subtitle */}
+                    <p style={{
+                        fontSize: '1.2rem',
+                        textAlign: 'center',
+                        marginBottom: '4rem',
+                        color: 'rgba(255, 255, 255, 0.9)',
+                        maxWidth: '600px',
+                        margin: '0 auto 4rem'
+                    }}>
+                        Join our growing community of students, researchers, and academics
+                    </p>
+
+                    {/* Stats Grid */}
+                    <div style={{
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
+                        gap: '2rem',
+                        marginTop: '3rem'
+                    }}>
+
+                        {/* Card 1 - Active Users */}
+                        <div style={{
+                            background: 'rgba(255, 255, 255, 0.15)',
+                            borderRadius: '16px',
+                            padding: '3rem 2rem',
+                            textAlign: 'center',
+                            backdropFilter: 'blur(10px)',
+                            border: '1px solid rgba(255, 255, 255, 0.2)',
+                            transition: 'all 0.3s ease'
+                        }}>
+                            <div style={{
+                                fontSize: '3.5rem',
+                                fontWeight: '900',
+                                color: 'white',
+                                marginBottom: '1rem',
+                                textShadow: '0 2px 4px rgba(0, 0, 0, 0.3)'
+                            }}>
                                 <CountUpNumber end={stats.totalUsers} />+
                             </div>
-                            <div className="stat-label">
-                                <i className="fas fa-users"></i>
+                            <div style={{
+                                fontSize: '1.1rem',
+                                fontWeight: '600',
+                                color: 'rgba(255, 255, 255, 0.9)',
+                                textTransform: 'uppercase',
+                                letterSpacing: '1px'
+                            }}>
+                                <i className="fas fa-users" style={{ marginRight: '0.5rem' }}></i>
                                 Active Users
                             </div>
                         </div>
-                        <div className="stat-card slide-up" style={{ animationDelay: '0.2s' }}>
-                            <div className="stat-number">
+
+                        {/* Card 2 - Events Hosted */}
+                        <div style={{
+                            background: 'rgba(255, 255, 255, 0.15)',
+                            borderRadius: '16px',
+                            padding: '3rem 2rem',
+                            textAlign: 'center',
+                            backdropFilter: 'blur(10px)',
+                            border: '1px solid rgba(255, 255, 255, 0.2)',
+                            transition: 'all 0.3s ease'
+                        }}>
+                            <div style={{
+                                fontSize: '3.5rem',
+                                fontWeight: '900',
+                                color: 'white',
+                                marginBottom: '1rem',
+                                textShadow: '0 2px 4px rgba(0, 0, 0, 0.3)'
+                            }}>
                                 <CountUpNumber end={stats.totalEvents} />+
                             </div>
-                            <div className="stat-label">
-                                <i className="fas fa-calendar-alt"></i>
+                            <div style={{
+                                fontSize: '1.1rem',
+                                fontWeight: '600',
+                                color: 'rgba(255, 255, 255, 0.9)',
+                                textTransform: 'uppercase',
+                                letterSpacing: '1px'
+                            }}>
+                                <i className="fas fa-calendar-alt" style={{ marginRight: '0.5rem' }}></i>
                                 Events Hosted
                             </div>
                         </div>
-                        <div className="stat-card slide-up" style={{ animationDelay: '0.3s' }}>
-                            <div className="stat-number">
+
+                        {/* Card 3 - Journals Created */}
+                        <div style={{
+                            background: 'rgba(255, 255, 255, 0.15)',
+                            borderRadius: '16px',
+                            padding: '3rem 2rem',
+                            textAlign: 'center',
+                            backdropFilter: 'blur(10px)',
+                            border: '1px solid rgba(255, 255, 255, 0.2)',
+                            transition: 'all 0.3s ease'
+                        }}>
+                            <div style={{
+                                fontSize: '3.5rem',
+                                fontWeight: '900',
+                                color: 'white',
+                                marginBottom: '1rem',
+                                textShadow: '0 2px 4px rgba(0, 0, 0, 0.3)'
+                            }}>
                                 <CountUpNumber end={stats.totalJournals} />+
                             </div>
-                            <div className="stat-label">
-                                <i className="fas fa-book"></i>
+                            <div style={{
+                                fontSize: '1.1rem',
+                                fontWeight: '600',
+                                color: 'rgba(255, 255, 255, 0.9)',
+                                textTransform: 'uppercase',
+                                letterSpacing: '1px'
+                            }}>
+                                <i className="fas fa-book" style={{ marginRight: '0.5rem' }}></i>
                                 Journals Created
                             </div>
                         </div>
-                        <div className="stat-card slide-up" style={{ animationDelay: '0.4s' }}>
-                            <div className="stat-number">
-                                <CountUpNumber end={stats.totalCommunities} />+
-                            </div>
-                            <div className="stat-label">
-                                <i className="fas fa-network-wired"></i>
-                                Communities
-                            </div>
-                        </div>
+
                     </div>
                 </div>
             </section>

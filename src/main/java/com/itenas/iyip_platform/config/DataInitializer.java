@@ -1,5 +1,5 @@
 // src/main/java/com/itenas/iyip_platform/config/DataInitializer.java
-// SIMPLE VERSION - sesuai struktur existing dan tambah Journals + Submissions
+// UPDATED VERSION dengan user baru
 
 package com.itenas.iyip_platform.config;
 
@@ -78,7 +78,7 @@ public class DataInitializer implements CommandLineRunner {
                     return;
                 }
 
-                // Create admin user
+                // Create original admin user
                 User adminUser = new User();
                 adminUser.setName("Admin User");
                 adminUser.setNim("ADMIN001");
@@ -92,15 +92,73 @@ public class DataInitializer implements CommandLineRunner {
                 adminUser.setRole(adminRole);
                 userRepository.save(adminUser);
 
-                // Create regular users dengan nama yang diminta
-                String[][] users = {
+                // ============== ADMIN USERS BARU ===============
+                // Admin A
+                User adminA = new User();
+                adminA.setName("Admin A");
+                adminA.setNim("admina");  // sesuai username yang diminta
+                adminA.setEmail("admina@iyip.com");
+                adminA.setPassword("admina123");
+                adminA.setBirthDate(LocalDate.of(1988, 5, 15));
+                adminA.setGender(User.Gender.PEREMPUAN);
+                adminA.setPhone("081234567892");
+                adminA.setProvince("Jawa Barat");
+                adminA.setCity("Bandung");
+                adminA.setRole(adminRole);
+                userRepository.save(adminA);
+
+                // Admin B
+                User adminB = new User();
+                adminB.setName("Admin B");
+                adminB.setNim("adminb");  // sesuai username yang diminta
+                adminB.setEmail("adminb@iyip.com");
+                adminB.setPassword("adminb123");
+                adminB.setBirthDate(LocalDate.of(1987, 8, 20));
+                adminB.setGender(User.Gender.LAKI_LAKI);
+                adminB.setPhone("081234567893");
+                adminB.setProvince("DKI Jakarta");
+                adminB.setCity("Jakarta");
+                adminB.setRole(adminRole);
+                userRepository.save(adminB);
+
+                // ============== USER BIASA BARU ===============
+                // User A
+                User userA = new User();
+                userA.setName("User A");
+                userA.setNim("usera");  // sesuai username yang diminta
+                userA.setEmail("usera@iyip.com");
+                userA.setPassword("usera123");
+                userA.setBirthDate(LocalDate.of(1998, 3, 10));
+                userA.setGender(User.Gender.LAKI_LAKI);
+                userA.setPhone("081234567894");
+                userA.setProvince("Jawa Timur");
+                userA.setCity("Surabaya");
+                userA.setRole(userRole);
+                userRepository.save(userA);
+
+                // User B
+                User userB = new User();
+                userB.setName("User B");
+                userB.setNim("userb");  // sesuai username yang diminta
+                userB.setEmail("userb@iyip.com");
+                userB.setPassword("userb123");
+                userB.setBirthDate(LocalDate.of(1999, 7, 25));
+                userB.setGender(User.Gender.PEREMPUAN);
+                userB.setPhone("081234567895");
+                userB.setProvince("Jawa Tengah");
+                userB.setCity("Semarang");
+                userB.setRole(userRole);
+                userRepository.save(userB);
+
+                // Create original regular users
+                String[][] originalUsers = {
                         {"Regular User 1", "USER001", "user@iyip.com", "user123", "Jawa Barat", "Bandung"},
                         {"Regular User 2", "USER002", "user2@iyip.com", "user123", "DKI Jakarta", "Jakarta"},
                         {"Sarah Johnson", "USER003", "sarah@iyip.com", "sarah123", "Jawa Timur", "Surabaya"},
                         {"Michael Chen", "USER004", "michael@iyip.com", "michael123", "Jawa Tengah", "Semarang"}
                 };
 
-                for (String[] userData : users) {
+                for (String[] userData : originalUsers) {
                     User user = new User();
                     user.setName(userData[0]);
                     user.setNim(userData[1]);
@@ -116,9 +174,17 @@ public class DataInitializer implements CommandLineRunner {
                 }
 
                 log.info("Users created successfully:");
-                log.info("- Admin: admin@iyip.com / admin123");
+                log.info("=== ADMIN USERS ===");
+                log.info("- Original Admin: admin@iyip.com / admin123");
+                log.info("- Admin A: admina@iyip.com / admina123");
+                log.info("- Admin B: adminb@iyip.com / adminb123");
+                log.info("=== REGULAR USERS ===");
+                log.info("- User A: usera@iyip.com / usera123");
+                log.info("- User B: userb@iyip.com / userb123");
                 log.info("- Regular User 1: user@iyip.com / user123");
                 log.info("- Regular User 2: user2@iyip.com / user123");
+                log.info("- Sarah Johnson: sarah@iyip.com / sarah123");
+                log.info("- Michael Chen: michael@iyip.com / michael123");
             }
         } catch (Exception e) {
             log.error("Error creating users", e);
@@ -139,7 +205,7 @@ public class DataInitializer implements CommandLineRunner {
                                 "Connect with fellow researchers, share findings, and collaborate on academic projects."},
 
                         {"Student Organizations",
-                                "A platform for student organizations to network and collaborate on campus initiatives."},
+                                "Hub for various student organizations, clubs, and extracurricular activities on campus."},
 
                         {"Creative Arts & Design",
                                 "Community for artists, designers, and creative professionals to showcase work and exchange ideas."},
@@ -170,29 +236,30 @@ public class DataInitializer implements CommandLineRunner {
             if (eventRepository.count() == 0) {
                 log.info("Creating sample events...");
 
-                Object[][] events = {
-                        {"Tech Innovation Summit 2025",
-                                "Annual technology innovation summit featuring the latest trends and industry insights.",
-                                LocalDate.of(2025, 8, 15), LocalDate.of(2025, 8, 17), LocalDate.of(2025, 8, 1)},
+                // Create sample events
+                Event event1 = new Event();
+                event1.setTitle("Tech Innovation Summit 2025");
+                event1.setDescription("Annual technology innovation summit featuring the latest trends and industry insights.");
+                event1.setStartDate(LocalDate.of(2025, 8, 15));
+                event1.setEndDate(LocalDate.of(2025, 8, 17));
+                event1.setRegistrationDeadline(LocalDate.of(2025, 8, 1));
+                eventRepository.save(event1);
 
-                        {"Academic Research Conference",
-                                "International conference showcasing cutting-edge research methodologies and findings.",
-                                LocalDate.of(2025, 9, 10), LocalDate.of(2025, 9, 12), LocalDate.of(2025, 8, 25)},
+                Event event2 = new Event();
+                event2.setTitle("Academic Research Conference");
+                event2.setDescription("International conference showcasing cutting-edge research methodologies and findings.");
+                event2.setStartDate(LocalDate.of(2025, 9, 10));
+                event2.setEndDate(LocalDate.of(2025, 9, 12));
+                event2.setRegistrationDeadline(LocalDate.of(2025, 8, 25));
+                eventRepository.save(event2);
 
-                        {"Innovation Workshop",
-                                "Hands-on workshop designed to foster innovation mindset and entrepreneurial skills.",
-                                LocalDate.of(2025, 7, 20), LocalDate.of(2025, 7, 21), LocalDate.of(2025, 7, 10)}
-                };
-
-                for (Object[] eventData : events) {
-                    Event event = new Event();
-                    event.setTitle((String) eventData[0]);
-                    event.setDescription((String) eventData[1]);
-                    event.setStartDate((LocalDate) eventData[2]);
-                    event.setEndDate((LocalDate) eventData[3]);
-                    event.setRegistrationDeadline((LocalDate) eventData[4]);
-                    eventRepository.save(event);
-                }
+                Event event3 = new Event();
+                event3.setTitle("Innovation Workshop");
+                event3.setDescription("Hands-on workshop designed to foster innovation mindset and entrepreneurial skills.");
+                event3.setStartDate(LocalDate.of(2025, 7, 20));
+                event3.setEndDate(LocalDate.of(2025, 7, 21));
+                event3.setRegistrationDeadline(LocalDate.of(2025, 7, 10));
+                eventRepository.save(event3);
 
                 log.info("Sample events created successfully");
             }
@@ -206,45 +273,49 @@ public class DataInitializer implements CommandLineRunner {
             if (journalRepository.count() == 0) {
                 log.info("Creating sample journals...");
 
-                Optional<User> sarahOpt = userRepository.findByEmail("sarah@iyip.com");
-                Optional<User> michaelOpt = userRepository.findByEmail("michael@iyip.com");
-                Optional<User> user1Opt = userRepository.findByEmail("user@iyip.com");
+                // Get some users for journal creation
+                Optional<User> user1 = userRepository.findByEmail("sarah@iyip.com");
+                Optional<User> user2 = userRepository.findByEmail("michael@iyip.com");
+                Optional<User> user3 = userRepository.findByEmail("user@iyip.com");
+                Optional<User> user4 = userRepository.findByEmail("usera@iyip.com");
 
-                if (sarahOpt.isPresent() && michaelOpt.isPresent() && user1Opt.isPresent()) {
-                    User sarah = sarahOpt.get();
-                    User michael = michaelOpt.get();
-                    User user1 = user1Opt.get();
-
-                    Object[][] journals = {
-                            {sarah, "AI in Healthcare: Revolutionary Approaches",
-                                    "This research explores the transformative application of artificial intelligence in modern healthcare systems.",
-                                    true, null},
-
-                            {michael, "Blockchain Technology for Financial Security",
-                                    "An comprehensive analysis of blockchain implementation in financial systems and security measures.",
-                                    true, null},
-
-                            {user1, "Machine Learning in Educational Technology",
-                                    "Exploring how machine learning enhances personalized learning experiences in modern education.",
-                                    false, null},
-
-                            {sarah, "Cybersecurity Challenges in IoT Devices",
-                                    "Analyzing security vulnerabilities in Internet of Things devices and protection mechanisms.",
-                                    true, null}
-                    };
-
-                    for (Object[] journalData : journals) {
-                        Journal journal = new Journal();
-                        journal.setUser((User) journalData[0]);
-                        journal.setTitle((String) journalData[1]);
-                        journal.setContent((String) journalData[2]);
-                        journal.setIsPublic((Boolean) journalData[3]);
-                        journal.setThumbnailUrl((String) journalData[4]);
-                        journalRepository.save(journal);
-                    }
-
-                    log.info("Sample journals created successfully");
+                if (user1.isPresent()) {
+                    Journal journal1 = new Journal();
+                    journal1.setTitle("AI in Healthcare: Revolutionary Approaches");
+                    journal1.setContent("This research explores the transformative application of artificial intelligence in modern healthcare systems.");
+                    journal1.setIsPublic(true);
+                    journal1.setUser(user1.get());
+                    journalRepository.save(journal1);
                 }
+
+                if (user2.isPresent()) {
+                    Journal journal2 = new Journal();
+                    journal2.setTitle("Blockchain Technology in Financial Systems");
+                    journal2.setContent("An comprehensive analysis of blockchain implementation in financial systems and security measures.");
+                    journal2.setIsPublic(true);
+                    journal2.setUser(user2.get());
+                    journalRepository.save(journal2);
+                }
+
+                if (user3.isPresent()) {
+                    Journal journal3 = new Journal();
+                    journal3.setTitle("Sustainable Engineering Practices");
+                    journal3.setContent("Exploring sustainable approaches in engineering design and environmental impact reduction.");
+                    journal3.setIsPublic(false);
+                    journal3.setUser(user3.get());
+                    journalRepository.save(journal3);
+                }
+
+                if (user4.isPresent()) {
+                    Journal journal4 = new Journal();
+                    journal4.setTitle("Modern Web Development Frameworks");
+                    journal4.setContent("A comprehensive study of contemporary web development frameworks and their practical applications.");
+                    journal4.setIsPublic(true);
+                    journal4.setUser(user4.get());
+                    journalRepository.save(journal4);
+                }
+
+                log.info("Sample journals created successfully");
             }
         } catch (Exception e) {
             log.error("Error creating journals", e);
@@ -256,46 +327,57 @@ public class DataInitializer implements CommandLineRunner {
             if (submissionRepository.count() == 0) {
                 log.info("Creating sample submissions...");
 
-                Optional<User> user1Opt = userRepository.findByEmail("user@iyip.com");
-                Optional<User> user2Opt = userRepository.findByEmail("user2@iyip.com");
-                Optional<User> sarahOpt = userRepository.findByEmail("sarah@iyip.com");
+                // Get some users for submission creation
+                Optional<User> user1 = userRepository.findByEmail("user@iyip.com");
+                Optional<User> user2 = userRepository.findByEmail("user2@iyip.com");
+                Optional<User> user3 = userRepository.findByEmail("usera@iyip.com");
+                Optional<User> user4 = userRepository.findByEmail("userb@iyip.com");
 
-                if (user1Opt.isPresent() && user2Opt.isPresent() && sarahOpt.isPresent()) {
-                    User user1 = user1Opt.get();
-                    User user2 = user2Opt.get();
-                    User sarah = sarahOpt.get();
-
-                    Object[][] submissions = {
-                            {user1, Submission.SubmissionType.MATERIAL, "Introduction to Machine Learning",
-                                    "Comprehensive educational material covering fundamental concepts of machine learning.",
-                                    "https://example.com/ml-material.pdf", Submission.SubmissionStatus.PENDING},
-
-                            {sarah, Submission.SubmissionType.FASILITAS, "Advanced Research Laboratory Equipment",
-                                    "Request for state-of-the-art equipment to support ongoing research projects.",
-                                    "https://example.com/lab-equipment.pdf", Submission.SubmissionStatus.APPROVED},
-
-                            {user2, Submission.SubmissionType.MATERIAL, "Web Development Course",
-                                    "Complete course material for web development covering modern frameworks.",
-                                    "https://example.com/web-dev.pdf", Submission.SubmissionStatus.APPROVED},
-
-                            {user1, Submission.SubmissionType.FASILITAS, "Student Collaborative Space",
-                                    "Proposal for modern collaborative workspace for student projects.",
-                                    "https://example.com/workspace.pdf", Submission.SubmissionStatus.REJECTED}
-                    };
-
-                    for (Object[] submissionData : submissions) {
-                        Submission submission = new Submission();
-                        submission.setUser((User) submissionData[0]);
-                        submission.setType((Submission.SubmissionType) submissionData[1]);
-                        submission.setTitle((String) submissionData[2]);
-                        submission.setContent((String) submissionData[3]);
-                        submission.setFileUrl((String) submissionData[4]);
-                        submission.setStatus((Submission.SubmissionStatus) submissionData[5]);
-                        submissionRepository.save(submission);
-                    }
-
-                    log.info("Sample submissions created successfully");
+                if (user1.isPresent()) {
+                    Submission submission1 = new Submission();
+                    submission1.setTitle("Research Laboratory Proposal");
+                    submission1.setContent("Comprehensive proposal for establishing a state-of-the-art research laboratory.");
+                    submission1.setType(Submission.SubmissionType.MATERIAL);
+                    submission1.setStatus(Submission.SubmissionStatus.PENDING);
+                    submission1.setFileUrl("https://example.com/research-proposal.pdf");
+                    submission1.setUser(user1.get());
+                    submissionRepository.save(submission1);
                 }
+
+                if (user2.isPresent()) {
+                    Submission submission2 = new Submission();
+                    submission2.setTitle("Advanced Research Laboratory Equipment");
+                    submission2.setContent("Request for advanced laboratory equipment for cutting-edge research activities.");
+                    submission2.setType(Submission.SubmissionType.FASILITAS);
+                    submission2.setStatus(Submission.SubmissionStatus.APPROVED);
+                    submission2.setFileUrl("https://example.com/lab-equipment.pdf");
+                    submission2.setUser(user2.get());
+                    submissionRepository.save(submission2);
+                }
+
+                if (user3.isPresent()) {
+                    Submission submission3 = new Submission();
+                    submission3.setTitle("Web Development Course Materials");
+                    submission3.setContent("Complete course material for web development covering modern frameworks and best practices.");
+                    submission3.setType(Submission.SubmissionType.MATERIAL);
+                    submission3.setStatus(Submission.SubmissionStatus.APPROVED);
+                    submission3.setFileUrl("https://example.com/web-dev.pdf");
+                    submission3.setUser(user3.get());
+                    submissionRepository.save(submission3);
+                }
+
+                if (user4.isPresent()) {
+                    Submission submission4 = new Submission();
+                    submission4.setTitle("Student Collaborative Space");
+                    submission4.setContent("Proposal for modern collaborative workspace for student projects and group activities.");
+                    submission4.setType(Submission.SubmissionType.FASILITAS);
+                    submission4.setStatus(Submission.SubmissionStatus.REJECTED);
+                    submission4.setFileUrl("https://example.com/workspace.pdf");
+                    submission4.setUser(user4.get());
+                    submissionRepository.save(submission4);
+                }
+
+                log.info("Sample submissions created successfully");
             }
         } catch (Exception e) {
             log.error("Error creating submissions", e);
