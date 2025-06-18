@@ -91,7 +91,7 @@ function AppContent() {
                     }
                 />
                 <Route
-                    path="/journals/edit/:id"
+                    path="/journals/:id/edit"
                     element={
                         <ProtectedRoute>
                             <Navbar />
