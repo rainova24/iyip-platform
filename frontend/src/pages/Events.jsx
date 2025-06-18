@@ -1,4 +1,5 @@
-// frontend/src/pages/Events.jsx
+// File: frontend/src/pages/Events.jsx
+
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
@@ -16,27 +17,30 @@ const Events = () => {
 
     useEffect(() => {
         loadEvents();
-    }, []);
+    }, [user]); // Reload when user changes
 
     const loadEvents = async () => {
         try {
             setLoading(true);
             console.log('Loading events from API...');
 
-            // Load all events and registered events
-            const [allEventsResponse, myEventsResponse] = await Promise.all([
-                authService.getEvents().catch(() => ({ data: { success: false, data: [] } })),
-                user ? authService.getMyEvents().catch(() => ({ data: { success: false, data: [] } })) : Promise.resolve({ data: { success: true, data: [] } })
-            ]);
-
+            // Load all events
+            const allEventsResponse = await authService.getEvents();
             console.log('Events API Response:', allEventsResponse);
-            console.log('My Events API Response:', myEventsResponse);
 
-            // Handle backend ApiResponse format: { success: true, message: "...", data: [...] }
-            let eventsData = [];
-            let myEventsData = [];
+            // Load registered events if user is logged in
+            let myEventsResponse = { data: { success: true, data: [] } };
+            if (user) {
+                try {
+                    myEventsResponse = await authService.getMyEvents();
+                    console.log('My Events API Response:', myEventsResponse);
+                } catch (error) {
+                    console.log('No registered events or API error:', error);
+                }
+            }
 
             // Extract events data from response
+            let eventsData = [];
             if (allEventsResponse.data) {
                 if (allEventsResponse.data.success && Array.isArray(allEventsResponse.data.data)) {
                     eventsData = allEventsResponse.data.data;
@@ -45,7 +49,8 @@ const Events = () => {
                 }
             }
 
-            // Extract my events data from response
+            // Extract registered events data
+            let myEventsData = [];
             if (myEventsResponse.data) {
                 if (myEventsResponse.data.success && Array.isArray(myEventsResponse.data.data)) {
                     myEventsData = myEventsResponse.data.data;
@@ -62,43 +67,13 @@ const Events = () => {
 
         } catch (error) {
             console.error('Error loading events:', error);
-
-            // Show error alert
             setAlert({
                 type: 'error',
                 message: 'Failed to load events from server. Please check your connection.'
             });
 
-            // Use demo data if API fails
-            setEvents([
-                {
-                    eventId: 1,
-                    title: "Tech Innovation Summit 2025",
-                    description: "Annual technology innovation summit featuring latest trends and technologies",
-                    startDate: "2025-08-15",
-                    endDate: "2025-08-17",
-                    registrationDeadline: "2025-08-01",
-                    totalRegistrations: 2
-                },
-                {
-                    eventId: 2,
-                    title: "Academic Research Conference",
-                    description: "International conference on academic research methodologies",
-                    startDate: "2025-09-10",
-                    endDate: "2025-09-12",
-                    registrationDeadline: "2025-08-25",
-                    totalRegistrations: 1
-                },
-                {
-                    eventId: 3,
-                    title: "Innovation Workshop",
-                    description: "Hands-on workshop for innovation and entrepreneurship",
-                    startDate: "2025-07-20",
-                    endDate: "2025-07-21",
-                    registrationDeadline: "2025-07-10",
-                    totalRegistrations: 5
-                }
-            ]);
+            // Set empty arrays to prevent crashes
+            setEvents([]);
             setRegisteredEvents([]);
         } finally {
             setLoading(false);
@@ -107,7 +82,7 @@ const Events = () => {
 
     const handleRegister = async (eventId) => {
         if (!user) {
-            setAlert({ type: 'error', message: 'Please login to register for events.' });
+            setAlert({ type: 'error', message: 'Please login first.' });
             return;
         }
 
@@ -119,21 +94,29 @@ const Events = () => {
 
             setAlert({ type: 'success', message: 'Successfully registered for the event!' });
 
-            // Reload data to reflect changes
-            await loadEvents();
+            // Update local state immediately for better UX
+            const registeredEvent = events.find(e => e.eventId === eventId);
+            if (registeredEvent) {
+                setRegisteredEvents(prev => [...prev, registeredEvent]);
+            }
+
+            // Then reload from server to ensure consistency
+            setTimeout(() => {
+                loadEvents();
+            }, 1000);
 
         } catch (error) {
             console.error('Error registering for event:', error);
 
             let errorMessage = 'Failed to register for event. Please try again.';
-
-            // Handle specific error messages
             if (error.response?.data?.message) {
                 errorMessage = error.response.data.message;
             } else if (error.response?.status === 401) {
-                errorMessage = 'Please login to register for events.';
+                errorMessage = 'Please login first.';
             } else if (error.response?.status === 409) {
                 errorMessage = 'You are already registered for this event.';
+            } else if (error.response?.status === 400) {
+                errorMessage = 'Registration deadline has passed or event is not available.';
             }
 
             setAlert({ type: 'error', message: errorMessage });
@@ -156,15 +139,18 @@ const Events = () => {
 
             setAlert({ type: 'success', message: 'Successfully unregistered from the event!' });
 
-            // Reload data to reflect changes
-            await loadEvents();
+            // Update local state immediately for better UX
+            setRegisteredEvents(prev => prev.filter(e => e.eventId !== eventId));
+
+            // Then reload from server to ensure consistency
+            setTimeout(() => {
+                loadEvents();
+            }, 1000);
 
         } catch (error) {
             console.error('Error unregistering from event:', error);
 
             let errorMessage = 'Failed to unregister from event. Please try again.';
-
-            // Handle specific error messages
             if (error.response?.data?.message) {
                 errorMessage = error.response.data.message;
             } else if (error.response?.status === 401) {
@@ -194,6 +180,18 @@ const Events = () => {
 
     const isRegistered = (eventId) => {
         return Array.isArray(registeredEvents) && registeredEvents.some(event => event.eventId === eventId);
+    };
+
+    const getEventStatus = (event) => {
+        const now = new Date();
+        const startDate = new Date(event.startDate);
+        const endDate = new Date(event.endDate);
+        const regDeadline = new Date(event.registrationDeadline);
+
+        if (now > endDate) return 'completed';
+        if (now >= startDate && now <= endDate) return 'ongoing';
+        if (now > regDeadline) return 'registration-closed';
+        return 'upcoming';
     };
 
     // Filter and search events safely
@@ -229,18 +227,6 @@ const Events = () => {
     };
 
     const filteredEvents = getFilteredEvents();
-
-    const getEventStatus = (event) => {
-        const now = new Date();
-        const startDate = new Date(event.startDate);
-        const endDate = new Date(event.endDate);
-        const regDeadline = new Date(event.registrationDeadline);
-
-        if (now > endDate) return 'completed';
-        if (now >= startDate && now <= endDate) return 'ongoing';
-        if (now > regDeadline) return 'registration-closed';
-        return 'upcoming';
-    };
 
     // Auto-hide alerts after 5 seconds
     useEffect(() => {
@@ -294,78 +280,65 @@ const Events = () => {
                 {alert && (
                     <div className={`alert alert-${alert.type}`}>
                         <i className={`fas ${alert.type === 'success' ? 'fa-check-circle' : 'fa-exclamation-triangle'}`}></i>
-                        {alert.message}
-                        <button className="alert-close" onClick={() => setAlert(null)}>×</button>
+                        <span>{alert.message}</span>
+                        <button
+                            className="alert-close"
+                            onClick={() => setAlert(null)}
+                            aria-label="Close alert"
+                        >
+                            <i className="fas fa-times"></i>
+                        </button>
                     </div>
                 )}
 
-                {/* Filters */}
-                <div className="events-filters">
+                {/* Filters and Search */}
+                <div className="events-controls">
                     <div className="filter-tabs">
                         <button
                             className={`filter-tab ${filter === 'all' ? 'active' : ''}`}
                             onClick={() => setFilter('all')}
                         >
-                            <i className="fas fa-calendar"></i>
                             All Events ({events.length})
                         </button>
                         <button
                             className={`filter-tab ${filter === 'upcoming' ? 'active' : ''}`}
                             onClick={() => setFilter('upcoming')}
                         >
-                            <i className="fas fa-clock"></i>
                             Upcoming ({events.filter(e => isUpcoming(e.startDate)).length})
                         </button>
                         <button
                             className={`filter-tab ${filter === 'registered' ? 'active' : ''}`}
                             onClick={() => setFilter('registered')}
                         >
-                            <i className="fas fa-check-circle"></i>
                             My Events ({registeredEvents.length})
                         </button>
                     </div>
+
                     <div className="search-box">
+                        <i className="fas fa-search"></i>
                         <input
                             type="text"
                             placeholder="Search events..."
-                            className="search-input"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                         />
-                        <button className="search-btn">
-                            <i className="fas fa-search"></i>
-                        </button>
                     </div>
                 </div>
 
                 {/* Events Grid */}
                 <div className="events-grid">
                     {filteredEvents.length === 0 ? (
-                        <div className="empty-state">
-                            <div className="empty-icon">
-                                <i className="fas fa-calendar"></i>
-                            </div>
+                        <div className="no-events">
+                            <i className="fas fa-calendar-times"></i>
                             <h3>No events found</h3>
                             <p>
-                                {searchTerm ? (
-                                    `No events match "${searchTerm}". Try a different search term.`
-                                ) : filter === 'registered' ? (
-                                    "You haven't registered for any events yet. Discover events to join!"
-                                ) : filter === 'upcoming' ? (
-                                    "No upcoming events available at the moment."
-                                ) : (
-                                    "No events available. This might be due to a connection issue."
-                                )}
+                                {searchTerm
+                                    ? `No events match your search "${searchTerm}"`
+                                    : filter === 'registered'
+                                        ? "You haven't registered for any events yet."
+                                        : "No events available at the moment."
+                                }
                             </p>
-                            {filter === 'registered' && (
-                                <button
-                                    className="btn btn-primary"
-                                    onClick={() => setFilter('upcoming')}
-                                >
-                                    <i className="fas fa-search"></i>
-                                    Discover Events
-                                </button>
-                            )}
                         </div>
                     ) : (
                         filteredEvents.map((event) => {
@@ -376,11 +349,11 @@ const Events = () => {
                             return (
                                 <div key={event.eventId} className={`event-card ${status}`}>
                                     <div className="event-card-header">
-                                        <div className="event-status">
-                                            <span className={`status-badge ${status}`}>
+                                        <div className="event-badges">
+                                            <span className={`event-status ${status}`}>
                                                 {status === 'upcoming' && <i className="fas fa-clock"></i>}
-                                                {status === 'ongoing' && <i className="fas fa-play"></i>}
-                                                {status === 'completed' && <i className="fas fa-check"></i>}
+                                                {status === 'ongoing' && <i className="fas fa-play-circle"></i>}
+                                                {status === 'completed' && <i className="fas fa-check-circle"></i>}
                                                 {status === 'registration-closed' && <i className="fas fa-lock"></i>}
                                                 {status.replace('-', ' ')}
                                             </span>
@@ -475,7 +448,15 @@ const Events = () => {
                                                 <i className="fas fa-sign-in-alt"></i>
                                                 Login to Register
                                             </Link>
-                                        ) : null}
+                                        ) : (
+                                            <button
+                                                className="btn btn-disabled btn-sm"
+                                                disabled
+                                            >
+                                                <i className="fas fa-ban"></i>
+                                                Registration Closed
+                                            </button>
+                                        )}
                                     </div>
                                 </div>
                             );
