@@ -1,4 +1,3 @@
-// LANGKAH 1: Perbaiki Navbar.jsx untuk dropdown admin yang berfungsi
 // File: frontend/src/components/Navbar.jsx
 
 import React, { useState, useRef, useEffect } from 'react';
@@ -11,7 +10,9 @@ const Navbar = () => {
     const navigate = useNavigate();
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [showAdminDropdown, setShowAdminDropdown] = useState(false);
-    const dropdownRef = useRef(null);
+    const [showUserDropdown, setShowUserDropdown] = useState(false);
+    const adminDropdownRef = useRef(null);
+    const userDropdownRef = useRef(null);
 
     const handleLogout = () => {
         logout();
@@ -26,11 +27,14 @@ const Navbar = () => {
         return location.pathname === path;
     };
 
-    // Close dropdown when clicking outside
+    // Close dropdowns when clicking outside
     useEffect(() => {
         const handleClickOutside = (event) => {
-            if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+            if (adminDropdownRef.current && !adminDropdownRef.current.contains(event.target)) {
                 setShowAdminDropdown(false);
+            }
+            if (userDropdownRef.current && !userDropdownRef.current.contains(event.target)) {
+                setShowUserDropdown(false);
             }
         };
 
@@ -73,11 +77,11 @@ const Navbar = () => {
                             </Link>
                         ))}
 
-                        {/* Admin Dropdown - PERBAIKAN */}
+                        {/* Admin Dropdown */}
                         {user?.roleName === 'ADMIN' && (
                             <div
                                 className="nav-dropdown"
-                                ref={dropdownRef}
+                                ref={adminDropdownRef}
                             >
                                 <button
                                     className="nav-link dropdown-toggle"
@@ -116,17 +120,81 @@ const Navbar = () => {
                 <div className="nav-auth">
                     {isAuthenticated ? (
                         <div className="user-menu">
-                            <div className="user-info dark">
-                                <div className="user-avatar">
-                                    {user?.name?.charAt(0)?.toUpperCase() || 'U'}
-                                </div>
-                                <span className="user-name">{user?.name || 'User'}</span>
-                            </div>
+                            {/* User Info with Dropdown */}
+                            <div className="nav-dropdown" ref={userDropdownRef}>
+                                <button
+                                    className="user-info dark dropdown-toggle"
+                                    onClick={() => setShowUserDropdown(!showUserDropdown)}
+                                    style={{
+                                        background: showUserDropdown
+                                            ? 'linear-gradient(135deg, var(--dark-orange), var(--primary-orange))'
+                                            : 'linear-gradient(135deg, var(--primary-orange), var(--secondary-orange))',
+                                        border: 'none',
+                                        borderRadius: '25px',
+                                        padding: '0.5rem 1rem',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '0.5rem',
+                                        cursor: 'pointer',
+                                        transition: 'all 0.2s ease'
+                                    }}
+                                >
+                                    <div className="user-avatar" style={{
+                                        width: '32px',
+                                        height: '32px',
+                                        background: 'rgba(255, 255, 255, 0.2)',
+                                        border: '2px solid rgba(255, 255, 255, 0.3)',
+                                        borderRadius: '50%',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        color: 'white',
+                                        fontWeight: '700',
+                                        fontSize: '14px'
+                                    }}>
+                                        {user?.name?.charAt(0)?.toUpperCase() || 'U'}
+                                    </div>
+                                    <span className="user-name" style={{
+                                        color: 'white',
+                                        fontWeight: '600',
+                                        fontSize: '14px'
+                                    }}>
+                                        {user?.name || 'User'}
+                                    </span>
+                                    <i className={`fas fa-chevron-${showUserDropdown ? 'up' : 'down'}`}
+                                       style={{ color: 'white', fontSize: '12px' }}></i>
+                                </button>
 
-                            <button onClick={handleLogout} className="logout-btn">
-                                <i className="fas fa-sign-out-alt"></i>
-                                Logout
-                            </button>
+                                {/* User Dropdown Menu */}
+                                {showUserDropdown && (
+                                    <div className="dropdown-menu" style={{ display: 'block' }}>
+                                        <Link
+                                            to="/profile"
+                                            className={`dropdown-item ${isActive('/profile') ? 'active' : ''}`}
+                                            onClick={() => setShowUserDropdown(false)}
+                                        >
+                                            <i className="fas fa-user-edit"></i>
+                                            <span>Edit Profile</span>
+                                        </Link>
+                                        <button
+                                            className="dropdown-item"
+                                            onClick={() => {
+                                                setShowUserDropdown(false);
+                                                handleLogout();
+                                            }}
+                                            style={{
+                                                color: '#dc3545',
+                                                borderTop: '1px solid rgba(0, 0, 0, 0.1)',
+                                                marginTop: '0.5rem',
+                                                paddingTop: '0.75rem'
+                                            }}
+                                        >
+                                            <i className="fas fa-sign-out-alt"></i>
+                                            <span>Logout</span>
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
                         </div>
                     ) : (
                         <div className="auth-buttons">
@@ -139,7 +207,90 @@ const Navbar = () => {
                         </div>
                     )}
                 </div>
+
+                {/* Mobile Menu Toggle */}
+                <button
+                    className="mobile-menu-toggle"
+                    onClick={toggleMenu}
+                    style={{
+                        display: 'none',
+                        background: 'none',
+                        border: 'none',
+                        fontSize: '1.5rem',
+                        color: '#FF6B35',
+                        cursor: 'pointer'
+                    }}
+                >
+                    <i className={`fas fa-${isMenuOpen ? 'times' : 'bars'}`}></i>
+                </button>
             </div>
+
+            {/* Mobile Navigation */}
+            {isMenuOpen && (
+                <div className="mobile-nav">
+                    <div className="mobile-user-info">
+                        <div className="user-avatar">
+                            {user?.name?.charAt(0)?.toUpperCase() || 'U'}
+                        </div>
+                        <span>{user?.name || 'User'}</span>
+                        <span className="user-role">{user?.roleName || 'USER'}</span>
+                    </div>
+
+                    <div className="mobile-nav-items">
+                        {navItems.map((item) => (
+                            <Link
+                                key={item.path}
+                                to={item.path}
+                                className={`mobile-nav-link ${isActive(item.path) ? 'active' : ''}`}
+                                onClick={() => setIsMenuOpen(false)}
+                            >
+                                <i className={item.icon}></i>
+                                <span>{item.label}</span>
+                            </Link>
+                        ))}
+
+                        {/* Mobile Admin Section */}
+                        {user?.roleName === 'ADMIN' && (
+                            <div className="mobile-admin-section">
+                                <div className="mobile-section-title">Admin Functions</div>
+                                {adminItems.map((item) => (
+                                    <Link
+                                        key={item.path}
+                                        to={item.path}
+                                        className={`mobile-nav-link admin-link ${isActive(item.path) ? 'active' : ''}`}
+                                        onClick={() => setIsMenuOpen(false)}
+                                    >
+                                        <i className={item.icon}></i>
+                                        <span>{item.label}</span>
+                                    </Link>
+                                ))}
+                            </div>
+                        )}
+
+                        {/* Mobile Profile & Logout */}
+                        <div className="mobile-nav-footer">
+                            <Link
+                                to="/profile"
+                                className={`mobile-nav-link ${isActive('/profile') ? 'active' : ''}`}
+                                onClick={() => setIsMenuOpen(false)}
+                            >
+                                <i className="fas fa-user-edit"></i>
+                                <span>Edit Profile</span>
+                            </Link>
+                            <button
+                                className="mobile-nav-link logout"
+                                onClick={() => {
+                                    setIsMenuOpen(false);
+                                    handleLogout();
+                                }}
+                            >
+                                <i className="fas fa-sign-out-alt"></i>
+                                <span>Logout</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </nav>
     );
 };
