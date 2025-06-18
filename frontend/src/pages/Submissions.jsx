@@ -124,11 +124,11 @@ const Submissions = () => {
                 <div className="submissions-header bg-primary text-white rounded p-4 mb-4">
                     <div className="d-flex justify-content-between align-items-center">
                         <div>
-                            <h1>
+                            <h1 style={{color:"White"}}>
                                 <i className="fas fa-paper-plane me-3"></i>
                                 {user?.roleName === 'ADMIN' ? 'All Submissions' : 'My Submissions'}
                             </h1>
-                            <p className="mb-0">
+                            <p className="mb-0" style={{color:"Black"}}>
                                 {user?.roleName === 'ADMIN'
                                     ? 'Manage all material and facility submissions'
                                     : 'Track your material and facility submissions'

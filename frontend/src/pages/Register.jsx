@@ -1,101 +1,98 @@
-// src/pages/Register.jsx
+// frontend/src/pages/Register.jsx - Enhanced version with admin features
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import authService from '../services/authService'; // Default import, bukan { authService }
+import api from '../services/api';
+import { useAuth } from '../contexts/AuthContext';
 
 const Register = () => {
     const navigate = useNavigate();
+    const { user } = useAuth();
     const [loading, setLoading] = useState(false);
-    const [errors, setErrors] = useState({});
+    const [error, setError] = useState('');
+    const [success, setSuccess] = useState('');
     const [formData, setFormData] = useState({
         name: '',
         nim: '',
         email: '',
         password: '',
         confirmPassword: '',
-        phone: '',
         birthDate: '',
         gender: '',
+        phone: '',
         province: '',
         city: ''
     });
 
-    const handleChange = (e) => {
+    const isAdmin = user?.roleName === 'ADMIN';
+
+    const handleInputChange = (e) => {
         const { name, value } = e.target;
         setFormData(prev => ({
             ...prev,
             [name]: value
         }));
-
-        // Clear error when user starts typing
-        if (errors[name]) {
-            setErrors(prev => ({
-                ...prev,
-                [name]: ''
-            }));
-        }
-    };
-
-    const validateForm = () => {
-        const newErrors = {};
-
-        // Required fields validation
-        if (!formData.name.trim()) {
-            newErrors.name = 'Full name is required';
-        }
-
-        if (!formData.email.trim()) {
-            newErrors.email = 'Email is required';
-        } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-            newErrors.email = 'Please enter a valid email address';
-        }
-
-        if (!formData.password) {
-            newErrors.password = 'Password is required';
-        } else if (formData.password.length < 6) {
-            newErrors.password = 'Password must be at least 6 characters';
-        }
-
-        if (!formData.confirmPassword) {
-            newErrors.confirmPassword = 'Please confirm your password';
-        } else if (formData.password !== formData.confirmPassword) {
-            newErrors.confirmPassword = 'Passwords do not match';
-        }
-
-        return newErrors;
+        setError(''); // Clear error when user types
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        setLoading(true);
+        setError('');
 
-        const formErrors = validateForm();
-        if (Object.keys(formErrors).length > 0) {
-            setErrors(formErrors);
+        // Validation
+        if (formData.password !== formData.confirmPassword) {
+            setError('Passwords do not match');
+            setLoading(false);
             return;
         }
 
-        setLoading(true);
-        setErrors({});
+        if (formData.password.length < 6) {
+            setError('Password must be at least 6 characters long');
+            setLoading(false);
+            return;
+        }
 
         try {
-            // Remove confirmPassword from data sent to backend
-            const { confirmPassword, ...registrationData } = formData;
+            // Prepare data for submission
+            const submitData = {
+                name: formData.name,
+                nim: formData.nim,
+                email: formData.email,
+                password: formData.password,
+                birthDate: formData.birthDate || null,
+                gender: formData.gender || null,
+                phone: formData.phone || null,
+                province: formData.province || null,
+                city: formData.city || null
+            };
 
-            // Call the register method from authService
-            const response = await authService.register(registrationData);
+            console.log('Submitting registration data:', submitData);
 
-            // Show success message or redirect
-            alert('Registration successful! Please login to continue.');
-            navigate('/login');
+            const response = await api.post('/auth/register', submitData);
+            console.log('Registration response:', response.data);
+
+            setSuccess('User registered successfully!');
+
+            // If admin is creating user, redirect to user management
+            if (isAdmin) {
+                setTimeout(() => {
+                    navigate('/admin/users');
+                }, 2000);
+            } else {
+                // Regular registration flow
+                setTimeout(() => {
+                    navigate('/login');
+                }, 2000);
+            }
+
         } catch (error) {
             console.error('Registration error:', error);
-
             if (error.response?.data?.message) {
-                setErrors({ submit: error.response.data.message });
+                setError(error.response.data.message);
             } else if (error.response?.data?.error) {
-                setErrors({ submit: error.response.data.error });
+                setError(error.response.data.error);
             } else {
-                setErrors({ submit: 'Registration failed. Please try again.' });
+                setError('Registration failed. Please try again.');
             }
         } finally {
             setLoading(false);
@@ -106,29 +103,47 @@ const Register = () => {
         <div className="auth-page">
             <div className="auth-container">
                 <div className="auth-form-wrapper">
-                    {/* Header */}
                     <div className="auth-header">
                         <div className="auth-logo">
                             <div className="logo-icon">I</div>
-                            <span className="logo-text">IYIP Platform</span>
+                            <span className="logo-text">IYIP</span>
                         </div>
-                        <h1 className="auth-title">Create New Account</h1>
-                        <p className="auth-subtitle">Join Itenas Youth Innovation Platform</p>
+                        <h1 className="auth-title">
+                            {isAdmin ? 'Add New User' : 'Create Account'}
+                        </h1>
+                        <p className="auth-subtitle">
+                            {isAdmin
+                                ? 'Create a new user account for the platform'
+                                : 'Join the IYIP Platform community today'
+                            }
+                        </p>
                     </div>
 
-                    {/* Form */}
-                    <form className="auth-form" onSubmit={handleSubmit}>
-                        {/* Error Message */}
-                        {errors.submit && (
-                            <div className="alert alert-error">
-                                <i className="icon-error">⚠</i>
-                                {errors.submit}
-                            </div>
-                        )}
+                    {error && (
+                        <div className="alert alert-error">
+                            <i className="fas fa-exclamation-circle icon-error"></i>
+                            {error}
+                        </div>
+                    )}
 
+                    {success && (
+                        <div className="alert" style={{
+                            background: '#d4edda',
+                            color: '#155724',
+                            border: '1px solid #c3e6cb'
+                        }}>
+                            <i className="fas fa-check-circle"></i>
+                            {success}
+                        </div>
+                    )}
+
+                    <form className="auth-form" onSubmit={handleSubmit}>
                         {/* Basic Information */}
                         <div className="form-section">
-                            <h3 className="section-title">Basic Information</h3>
+                            <h3 className="section-title">
+                                <i className="fas fa-user"></i>
+                                Basic Information
+                            </h3>
 
                             <div className="form-row">
                                 <div className="form-group">
@@ -138,25 +153,26 @@ const Register = () => {
                                     <input
                                         type="text"
                                         name="name"
-                                        className={`form-control ${errors.name ? 'error' : ''}`}
+                                        className="form-control"
                                         value={formData.name}
-                                        onChange={handleChange}
-                                        placeholder="Enter your full name"
-                                        disabled={loading}
+                                        onChange={handleInputChange}
+                                        required
+                                        placeholder="Enter full name"
                                     />
-                                    {errors.name && <span className="error-text">{errors.name}</span>}
                                 </div>
 
                                 <div className="form-group">
-                                    <label className="form-label">NIM (Student ID)</label>
+                                    <label className="form-label">
+                                        NIM <span className="required">*</span>
+                                    </label>
                                     <input
                                         type="text"
                                         name="nim"
                                         className="form-control"
                                         value={formData.nim}
-                                        onChange={handleChange}
-                                        placeholder="Enter your NIM"
-                                        disabled={loading}
+                                        onChange={handleInputChange}
+                                        required
+                                        placeholder="Enter NIM"
                                     />
                                 </div>
                             </div>
@@ -168,19 +184,13 @@ const Register = () => {
                                 <input
                                     type="email"
                                     name="email"
-                                    className={`form-control ${errors.email ? 'error' : ''}`}
+                                    className="form-control"
                                     value={formData.email}
-                                    onChange={handleChange}
-                                    placeholder="your.email@example.com"
-                                    disabled={loading}
+                                    onChange={handleInputChange}
+                                    required
+                                    placeholder="Enter email address"
                                 />
-                                {errors.email && <span className="error-text">{errors.email}</span>}
                             </div>
-                        </div>
-
-                        {/* Security */}
-                        <div className="form-section">
-                            <h3 className="section-title">Security</h3>
 
                             <div className="form-row">
                                 <div className="form-group">
@@ -190,13 +200,13 @@ const Register = () => {
                                     <input
                                         type="password"
                                         name="password"
-                                        className={`form-control ${errors.password ? 'error' : ''}`}
+                                        className="form-control"
                                         value={formData.password}
-                                        onChange={handleChange}
-                                        placeholder="Minimum 6 characters"
-                                        disabled={loading}
+                                        onChange={handleInputChange}
+                                        required
+                                        placeholder="Enter password"
+                                        minLength="6"
                                     />
-                                    {errors.password && <span className="error-text">{errors.password}</span>}
                                 </div>
 
                                 <div className="form-group">
@@ -206,35 +216,24 @@ const Register = () => {
                                     <input
                                         type="password"
                                         name="confirmPassword"
-                                        className={`form-control ${errors.confirmPassword ? 'error' : ''}`}
+                                        className="form-control"
                                         value={formData.confirmPassword}
-                                        onChange={handleChange}
-                                        placeholder="Re-enter your password"
-                                        disabled={loading}
+                                        onChange={handleInputChange}
+                                        required
+                                        placeholder="Confirm password"
                                     />
-                                    {errors.confirmPassword && <span className="error-text">{errors.confirmPassword}</span>}
                                 </div>
                             </div>
                         </div>
 
-                        {/* Additional Information */}
+                        {/* Personal Information */}
                         <div className="form-section">
-                            <h3 className="section-title">Additional Information <span className="optional">(Optional)</span></h3>
+                            <h3 className="section-title">
+                                <i className="fas fa-id-card"></i>
+                                Personal Information <span className="optional">(Optional)</span>
+                            </h3>
 
                             <div className="form-row">
-                                <div className="form-group">
-                                    <label className="form-label">Phone Number</label>
-                                    <input
-                                        type="tel"
-                                        name="phone"
-                                        className="form-control"
-                                        value={formData.phone}
-                                        onChange={handleChange}
-                                        placeholder="+62 xxx xxx xxxx"
-                                        disabled={loading}
-                                    />
-                                </div>
-
                                 <div className="form-group">
                                     <label className="form-label">Birth Date</label>
                                     <input
@@ -242,28 +241,46 @@ const Register = () => {
                                         name="birthDate"
                                         className="form-control"
                                         value={formData.birthDate}
-                                        onChange={handleChange}
-                                        disabled={loading}
+                                        onChange={handleInputChange}
                                     />
                                 </div>
-                            </div>
 
-                            <div className="form-row">
                                 <div className="form-group">
                                     <label className="form-label">Gender</label>
                                     <select
                                         name="gender"
                                         className="form-control"
                                         value={formData.gender}
-                                        onChange={handleChange}
-                                        disabled={loading}
+                                        onChange={handleInputChange}
                                     >
                                         <option value="">Select Gender</option>
                                         <option value="LAKI_LAKI">Male</option>
                                         <option value="PEREMPUAN">Female</option>
                                     </select>
                                 </div>
+                            </div>
 
+                            <div className="form-group">
+                                <label className="form-label">Phone Number</label>
+                                <input
+                                    type="tel"
+                                    name="phone"
+                                    className="form-control"
+                                    value={formData.phone}
+                                    onChange={handleInputChange}
+                                    placeholder="Enter phone number"
+                                />
+                            </div>
+                        </div>
+
+                        {/* Location Information */}
+                        <div className="form-section">
+                            <h3 className="section-title">
+                                <i className="fas fa-map-marker-alt"></i>
+                                Location <span className="optional">(Optional)</span>
+                            </h3>
+
+                            <div className="form-row">
                                 <div className="form-group">
                                     <label className="form-label">Province</label>
                                     <input
@@ -271,28 +288,25 @@ const Register = () => {
                                         name="province"
                                         className="form-control"
                                         value={formData.province}
-                                        onChange={handleChange}
-                                        placeholder="e.g., West Java"
-                                        disabled={loading}
+                                        onChange={handleInputChange}
+                                        placeholder="Enter province"
+                                    />
+                                </div>
+
+                                <div className="form-group">
+                                    <label className="form-label">City</label>
+                                    <input
+                                        type="text"
+                                        name="city"
+                                        className="form-control"
+                                        value={formData.city}
+                                        onChange={handleInputChange}
+                                        placeholder="Enter city"
                                     />
                                 </div>
                             </div>
-
-                            <div className="form-group">
-                                <label className="form-label">City</label>
-                                <input
-                                    type="text"
-                                    name="city"
-                                    className="form-control"
-                                    value={formData.city}
-                                    onChange={handleChange}
-                                    placeholder="e.g., Bandung"
-                                    disabled={loading}
-                                />
-                            </div>
                         </div>
 
-                        {/* Submit Button */}
                         <button
                             type="submit"
                             className="btn btn-primary btn-full"
@@ -300,43 +314,84 @@ const Register = () => {
                         >
                             {loading ? (
                                 <>
-                                    <div className="loading-spinner"></div>
-                                    Creating Account...
+                                    <i className="fas fa-spinner fa-spin"></i>
+                                    {isAdmin ? 'Creating User...' : 'Creating Account...'}
                                 </>
                             ) : (
-                                'Create Account'
+                                <>
+                                    <i className="fas fa-user-plus"></i>
+                                    {isAdmin ? 'Create User' : 'Create Account'}
+                                </>
                             )}
                         </button>
 
-                        {/* Login Link */}
-                        <div className="auth-footer">
-                            <p>
-                                Already have an account?{' '}
-                                <Link to="/login" className="auth-link">
-                                    Sign in here
-                                </Link>
-                            </p>
+                        <div style={{
+                            textAlign: 'center',
+                            marginTop: '2rem',
+                            paddingTop: '2rem',
+                            borderTop: '1px solid #E9ECEF'
+                        }}>
+                            {isAdmin ? (
+                                <p style={{ color: '#7F8C8D' }}>
+                                    <Link
+                                        to="/admin/users"
+                                        style={{ color: '#FF6B35', textDecoration: 'none' }}
+                                    >
+                                        ← Back to User Management
+                                    </Link>
+                                </p>
+                            ) : (
+                                <p style={{ color: '#7F8C8D' }}>
+                                    Already have an account?{' '}
+                                    <Link
+                                        to="/login"
+                                        style={{ color: '#FF6B35', textDecoration: 'none' }}
+                                    >
+                                        Sign In
+                                    </Link>
+                                </p>
+                            )}
                         </div>
                     </form>
                 </div>
 
-                {/* Decorative Side */}
+                {/* Decoration Section */}
                 <div className="auth-decoration">
                     <div className="decoration-content">
-                        <h2>Welcome to IYIP</h2>
-                        <p>Join our community of young innovators and researchers at Itenas.</p>
+                        <h2>Welcome to IYIP Platform</h2>
+                        <p>
+                            Join our community of innovators, researchers, and students.
+                            Create your account to access exclusive features and collaborate
+                            with like-minded individuals.
+                        </p>
+
                         <div className="decoration-features">
                             <div className="feature-item">
-                                <div className="feature-icon">📚</div>
-                                <span>Access Research Journals</span>
+                                <div className="feature-icon">
+                                    <i className="fas fa-journal-whills"></i>
+                                </div>
+                                <span>Digital Journal Management</span>
                             </div>
+
                             <div className="feature-item">
-                                <div className="feature-icon">🎯</div>
-                                <span>Join Innovation Events</span>
+                                <div className="feature-icon">
+                                    <i className="fas fa-calendar-alt"></i>
+                                </div>
+                                <span>Event Registration & Management</span>
                             </div>
+
                             <div className="feature-item">
-                                <div className="feature-icon">🤝</div>
-                                <span>Connect with Communities</span>
+                                <div className="feature-icon">
+                                    <i className="fas fa-users"></i>
+                                </div>
+                                <span>Community Collaboration</span>
+                            </div>
+
+                            <div className="feature-item">
+                                <div className="feature-icon">
+                                    <i className="fas fa-upload"></i>
+                                </div>
+                                <span>Easy Submission System</span>
                             </div>
                         </div>
                     </div>

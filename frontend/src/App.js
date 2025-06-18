@@ -1,4 +1,4 @@
-// frontend/src/App.js
+// frontend/src/App.js - CORRECTED VERSION
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import 'bootstrap/dist/css/bootstrap.min.css';
@@ -19,17 +19,19 @@ import SubmissionDetail from './pages/SubmissionDetail';
 import Communities from './pages/Communities';
 import UserInfo from './pages/UserInfo';
 import UserManagement from './pages/UserManagement';
+import EditUser from './pages/EditUser';         // NEW IMPORT
+import AddUser from './pages/AddUser';           // NEW IMPORT
 
 // Auth Context
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 
-// Protected Route Component
+// Protected Route Component (EXISTING)
 const ProtectedRoute = ({ children }) => {
     const { isAuthenticated } = useAuth();
     return isAuthenticated ? children : <Navigate to="/login" />;
 };
 
-// Admin Only Route Component
+// Admin Only Route Component (EXISTING)
 const AdminRoute = ({ children }) => {
     const { isAuthenticated, user } = useAuth();
 
@@ -89,7 +91,7 @@ function AppContent() {
                     }
                 />
                 <Route
-                    path="/journals/:id/edit"
+                    path="/journals/edit/:id"
                     element={
                         <ProtectedRoute>
                             <Navbar />
@@ -150,6 +152,27 @@ function AppContent() {
                         <AdminRoute>
                             <Navbar />
                             <UserManagement />
+                        </AdminRoute>
+                    }
+                />
+
+                {/* NEW ADMIN ROUTES */}
+                <Route
+                    path="/admin/users/add"
+                    element={
+                        <AdminRoute>
+                            <Navbar />
+                            <AddUser />
+                        </AdminRoute>
+                    }
+                />
+
+                <Route
+                    path="/admin/users/edit/:userId"
+                    element={
+                        <AdminRoute>
+                            <Navbar />
+                            <EditUser />
                         </AdminRoute>
                     }
                 />
